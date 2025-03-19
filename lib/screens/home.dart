@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
+import 'chat_list.dart'; // Import the chat list screen
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 2; // Start with Home selected
+  
+  // List of screens for each tab
+  final List<Widget> _screens = [
+    Center(child: Text('Wanted Screen', style: TextStyle(color: Colors.white))),
+    Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
+    Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
+    ChatList(), // Chat screen
+    Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      appBar: AppBar(
+      appBar: _currentIndex == 3 ? null : AppBar(
         title: Row(
           children: [
             Image.asset(
@@ -57,12 +74,7 @@ class HomePage extends StatelessWidget {
         elevation: 0,
       ),
       
-      body: const Center(
-        child: Text(
-          'Content Area - Grid of Agricultural Waste Types',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
+      body: _screens[_currentIndex],
 
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -91,9 +103,11 @@ class HomePage extends StatelessWidget {
             label: 'Profile',
           ),
         ],
-        currentIndex: 2, // Home selected
+        currentIndex: _currentIndex,
         onTap: (index) {
-          // Handle navigation
+          setState(() {
+            _currentIndex = index;
+          });
         },
       ),
     );
