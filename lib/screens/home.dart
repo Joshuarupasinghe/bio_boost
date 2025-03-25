@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'chat_list.dart'; // Import the chat list screen
-import 'detail.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
