@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "650586806039",
+    "project_id": "bio-boost-lk",
+    "storage_bucket": "bio-boost-lk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650586806039:android:071d68d222f9d00a980952",
+        "android_client_info": {
+          "package_name": "com.example.bio_boost"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCci8hXxrx3wOKq294PvU2-G7PPvlqwZQA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
