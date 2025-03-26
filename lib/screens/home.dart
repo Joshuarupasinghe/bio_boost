@@ -14,17 +14,17 @@ class _HomePageState extends State<HomePage> {
 
   // List of screens for each tab
   final List<Widget> _screens = [
-    // Center(child: Text('Wanted Screen', style: TextStyle(color: Colors.white))),
-    BecomeSellerPage(),
+    Center(child: Text('Wanted Screen', style: TextStyle(color: Colors.white))),
     // AgriWasteDetailPage(), //detail screen
     Center(
       child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
     ),
     Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
     ChatList(), // Chat screen
-    Center(
-      child: Text('Profile Screen', style: TextStyle(color: Colors.white)),
-    ),
+    BecomeSellerPage(), 
+    // Center(
+    //   child: Text('Profile Screen', style: TextStyle(color: Colors.white)),
+    // ),
   ];
 
   @override
