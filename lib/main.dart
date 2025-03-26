@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import './screens/home.dart';
-import './screens/become_seller.dart';
 
 void main() {
   runApp(const MyApp());

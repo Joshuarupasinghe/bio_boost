@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_list.dart'; // Import the chat list screen
-<<<<<<< HEAD
-=======
 import 'become_seller.dart'; //Import the become seller page
-import 'detail.dart';
->>>>>>> ce1dfabedd36d5527dfa03bcc72a96c455f41222
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
