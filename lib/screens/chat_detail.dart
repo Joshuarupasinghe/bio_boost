@@ -5,10 +5,10 @@ class ChatDetailScreen extends StatefulWidget {
   final String avatar;
 
   const ChatDetailScreen({
-    Key? key,
+    super.key,
     required this.name,
     required this.avatar,
-  }) : super(key: key);
+  });
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
