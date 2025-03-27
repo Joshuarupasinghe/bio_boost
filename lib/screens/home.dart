@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_list.dart'; // Import the chat list screen
-
 import 'benefits.dart';
-
 import 'become_seller.dart'; //Import the become seller page
 
 
