@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_list.dart'; // Import the chat list screen
+import 'benefits.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class _HomePageState extends State<HomePage> {
     Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
     Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
     ChatList(), // Chat screen
+    BenefitsPage(),
     Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
   ];
 
@@ -98,6 +100,9 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.question_answer),
             label: 'Chat',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.recycling), 
+            label: 'Benefits'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
