@@ -1,3 +1,4 @@
+import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:flutter/material.dart';
 import 'chat_list.dart'; // Import the chat list screen
 import 'benefits.dart';
@@ -16,7 +17,7 @@ class _HomePageState extends State<HomePage> {
 
 // List of screens for each tab
 final List<Widget> _screens = [
-  Center(child: Text('Wanted Screen', style: TextStyle(color: Colors.white))),
+  WantedCompanyPage(),
   Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
   BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
   ChatList(), // Chat screen
