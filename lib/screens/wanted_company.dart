@@ -40,16 +40,22 @@ class WantedCompanyPage extends StatelessWidget {
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                      child: const Text("Filter BTN", style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        "Filter BTN",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Add Yours Button
             Container(
               width: double.infinity,
@@ -66,7 +72,7 @@ class WantedCompanyPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // List of Wanted Items
             Expanded(
               child: ListView(
