@@ -95,4 +95,5 @@ class BecomeSellerPage extends StatelessWidget {
       ),
     );
   }
+  
 }

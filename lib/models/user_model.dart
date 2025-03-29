@@ -21,7 +21,7 @@ class UserModel {
     required this.city,
   });
 
-// Convert UserModel to Map (for Firestore storing)
+  // Convert UserModel to Map (for Firestore storing)
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -36,7 +36,7 @@ class UserModel {
     };
   }
 
-// Convert Map to UserModel (for Firestore retrieving)
+  // Convert Map to UserModel (for Firestore retrieving)
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'],
@@ -50,8 +50,8 @@ class UserModel {
       city: map['city'],
     );
   }
-  
-// Create a new instance of UserModel with updated values  
+
+  // Create a new instance of UserModel with updated values
   UserModel copyWith({
     String? uid,
     String? firstName,
@@ -62,7 +62,7 @@ class UserModel {
     String? address,
     String? district,
     String? city,
-    }) {
+  }) {
     return UserModel(
       uid: uid ?? this.uid,
       firstName: firstName ?? this.firstName,
