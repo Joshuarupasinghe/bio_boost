@@ -33,7 +33,7 @@ class ServiceRequestService {
     try {
       QuerySnapshot querySnapshot = await _firestore
           .collection('serviceRequests')
-          .orderBy('timestamp', descending: true)
+          .orderBy('timestamp', descending: false)
           .get();
       
       return querySnapshot.docs
@@ -53,7 +53,7 @@ class ServiceRequestService {
       QuerySnapshot querySnapshot = await _firestore
           .collection('serviceRequests')
           .where('name', isEqualTo: name)
-          .orderBy('timestamp', descending: true)
+          .orderBy('timestamp', descending: false)
           .get();
       
       return querySnapshot.docs
