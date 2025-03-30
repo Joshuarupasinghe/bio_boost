@@ -1,7 +1,42 @@
+import 'package:bio_boost/screens/Add_MyServices.dart';
+import 'package:bio_boost/services/service_request_service.dart';
 import 'package:flutter/material.dart';
 
-class WantedCompanyPage extends StatelessWidget {
+class WantedCompanyPage extends StatefulWidget {
   const WantedCompanyPage({super.key});
+
+  @override
+  _WantedCompanyPageState createState() => _WantedCompanyPageState();
+}
+
+class _WantedCompanyPageState extends State<WantedCompanyPage> {
+  final ServiceRequestService _serviceRequestService = ServiceRequestService();
+  List<Map<String, dynamic>> _serviceRequests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchServiceRequests();
+  }
+
+  Future<void> _fetchServiceRequests() async {
+    try {
+      final requests = await _serviceRequestService.getServiceRequests();
+      setState(() {
+        _serviceRequests = requests;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error (e.g., show a snackbar)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load service requests: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,72 +51,73 @@ class WantedCompanyPage extends StatelessWidget {
         backgroundColor: Colors.grey[900],
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Filter Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  _buildDropdown("District"),
-                  const SizedBox(height: 10),
-                  _buildDropdown("City"),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddMyServicesPage()),
+          );
+        },
+        backgroundColor: Colors.teal,
+        child: Icon(Icons.add),
+      ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Filter Section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        "Filter BTN",
-                        style: TextStyle(color: Colors.white),
+                      child: Column(
+                        children: [
+                          _buildDropdown("District"),
+                          const SizedBox(height: 10),
+                          _buildDropdown("City"),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Add filter logic here
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                "Filter",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-            // Add Yours Button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.teal,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Text(
-                  "Add Yours",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    // List of Wanted Items
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _serviceRequests.length,
+                        itemBuilder: (context, index) {
+                          return _buildWantedCard(_serviceRequests[index]);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // List of Wanted Items
-            Expanded(
-              child: ListView(
-                children: [_buildWantedCard(), _buildWantedCard()],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -107,7 +143,9 @@ class WantedCompanyPage extends StatelessWidget {
                 ['Option 1', 'Option 2'].map((option) {
                   return DropdownMenuItem(value: option, child: Text(option));
                 }).toList(),
-            onChanged: (value) {},
+            onChanged: (value) {
+              // Handle dropdown selection
+            },
           ),
         ),
       ],
@@ -115,7 +153,7 @@ class WantedCompanyPage extends StatelessWidget {
   }
 
   // Function for Wanted Cards
-  Widget _buildWantedCard() {
+  Widget _buildWantedCard(Map<String, dynamic> data) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -141,22 +179,31 @@ class WantedCompanyPage extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  "Needs ___(Agri waste type)____",
-                  style: TextStyle(
+                  "Needs ${data['serviceType'] ?? 'Unknown'}",
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 5),
-                Text("Name: xxxxx", style: TextStyle(color: Colors.white)),
-                Text("Location", style: TextStyle(color: Colors.white)),
-                Text("Weight", style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 5),
                 Text(
-                  "Small Description about what he need",
-                  style: TextStyle(color: Colors.white70),
+                  "Name: ${data['name'] ?? 'N/A'}",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                  "Location: ${data['location'] ?? 'N/A'}",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                  "Weight: ${data['weight'] ?? 'N/A'} kg",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                  data['description'] ?? 'No description provided',
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),

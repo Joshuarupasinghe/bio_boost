@@ -51,7 +51,7 @@ class WishlistPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: 120,
@@ -95,35 +95,34 @@ class WishlistPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    Column(
+                      children: [
+                        // Call Icon
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.teal,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.call, color: Colors.white),
+                        ),
+                        const SizedBox(height: 10),
+                        // Delete Icon
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Column(
-          children: [
-            // Call Icon
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.teal,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.call, color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            // Delete Icon
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.delete, color: Colors.white),
-            ),
-          ],
         ),
       ],
     );
