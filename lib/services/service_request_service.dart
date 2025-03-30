@@ -93,4 +93,12 @@ class ServiceRequestService {
       throw Exception('Failed to delete service request: $e');
     }
   }
+
+  // Stream service requests to get real-time updates
+  Stream<QuerySnapshot> fetchServiceRequests() {
+    return _firestore
+        .collection('serviceRequests')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
 }
