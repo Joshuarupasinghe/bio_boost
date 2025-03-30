@@ -8,6 +8,7 @@ class UserModel {
   final String address;
   final String district;
   final String city;
+  final String role; // New field: 'buyer' or 'seller'
 
   UserModel({
     required this.uid,
@@ -19,6 +20,7 @@ class UserModel {
     required this.address,
     required this.district,
     required this.city,
+    required this.role,
   });
 
   // Convert UserModel to Map (for Firestore storing)
@@ -33,6 +35,7 @@ class UserModel {
       'address': address,
       'district': district,
       'city': city,
+      'role': role,
     };
   }
 
@@ -48,6 +51,7 @@ class UserModel {
       address: map['address'],
       district: map['district'],
       city: map['city'],
+      role: map['role'] ?? 'seller', // Default to 'seller' if not provided
     );
   }
 
@@ -62,6 +66,7 @@ class UserModel {
     String? address,
     String? district,
     String? city,
+    String? role,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -73,6 +78,7 @@ class UserModel {
       address: address ?? this.address,
       district: district ?? this.district,
       city: city ?? this.city,
+      role: role ?? this.role,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/service_request_service.dart';
+import '../services/wanted_sales_service.dart';
 
 class AddMyServicesPage extends StatefulWidget {
   @override
@@ -19,6 +20,8 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
     "Maize and Other Cereal Residues",
     "Banana Plant Waste",
   ];
+
+  final WantedSalesService _wantedSalesService = WantedSalesService();
 
   final ServiceRequestService _serviceRequestService = ServiceRequestService();
   
