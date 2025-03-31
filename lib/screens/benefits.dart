@@ -67,11 +67,18 @@ class BenefitsPage extends StatelessWidget {
   }
 }
 
-class BenefitTile extends StatelessWidget {
+class BenefitTile extends StatefulWidget {
   final String title;
   final String description;
 
   const BenefitTile({required this.title, required this.description, super.key});
+
+  @override
+  State<BenefitTile> createState() => _BenefitTileState();
+}
+
+class _BenefitTileState extends State<BenefitTile> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -84,41 +91,49 @@ class BenefitTile extends StatelessWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           title: Text(
-            title,
-            style: const TextStyle(
+            widget.title,
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: _isExpanded ? Colors.teal : Colors.white,
               fontSize: 16,
             ),
           ),
           iconColor: Colors.white,
           collapsedIconColor: Colors.white,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          onExpansionChanged: (expanded) {
+            setState(() {
+              _isExpanded = expanded;
+            });
+          },
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14), // Extra top padding
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.grey[800]!.withOpacity(0.5),
-                    Colors.grey[850]!.withOpacity(0.5), // Added more color stops
-                    Colors.grey[900]!.withOpacity(0.5), // Added more color stops
+                    Colors.grey[700]!,
+                    Colors.grey[800]!,
+                    Colors.grey[850]!,
+                    Colors.grey[900]!,
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.33, 0.66, 1.0],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0), // Extra space to prevent cutoff
                   child: Text(
-                    description,
+                    widget.description,
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    textAlign: TextAlign.left,
                   ),
                 ),
               ),
