@@ -49,7 +49,7 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black,
                     blurRadius: 10,
                     spreadRadius: 3,
                     offset: Offset(0, 4),
@@ -124,20 +124,8 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
                       width: double.infinity,
                       padding: EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: Colors.teal,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF4CAF50).withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
                       ),
                       child: Center(
                         child: _isLoading 
