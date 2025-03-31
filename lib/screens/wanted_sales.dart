@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/service_request_service.dart'; // Ensure this service handles Firebase fetching
 
 class WantedPage extends StatefulWidget {
   const WantedPage({super.key});
@@ -8,72 +10,55 @@ class WantedPage extends StatefulWidget {
 }
 
 class _WantedPageState extends State<WantedPage> {
-  // Districts and corresponding cities
+  // Example of Sri Lankan districts and their cities
   final Map<String, List<String>> districtCities = {
-    "Colombo": ["Colombo 1", "Colombo 2", "Colombo 3"],
-    "Gampaha": ["Negombo", "Gampaha", "Ja-Ela"],
-    "Kandy": ["Peradeniya", "Katugastota", "Pilimathalawa"],
-    "Galle": ["Unawatuna", "Hikkaduwa", "Ambalangoda"],
-    "Jaffna": ["Nallur", "Chavakachcheri", "Point Pedro"],
+    "Colombo": [
+      "Colombo",
+      "Dehiwala-Mount Lavinia",
+      "Sri Jayawardenepura Kotte",
+      "Moratuwa",
+      "Kolonnawa",
+    ],
+    "Gampaha": ["Negombo", "Gampaha", "Ja-Ela", "Minuwangoda", "Kaduwela"],
+    "Kalutara": ["Kalutara", "Panadura", "Horana", "Matugama", "Beruwala"],
+    "Kandy": ["Kandy", "Katugastota", "Peradeniya", "Gampola", "Kundasale"],
+    "Matale": ["Matale", "Dambulla", "Sigiriya", "Rattota", "Galewela"],
+    "Nuwara Eliya": [
+      "Nuwara Eliya",
+      "Hatton",
+      "Talawakelle",
+      "Ginigathena",
+      "Kandapola",
+    ],
+    "Galle": ["Galle", "Ambalangoda", "Hikkaduwa", "Elpitiya", "Baddegama"],
+    "Hambantota": [
+      "Hambantota",
+      "Tangalle",
+      "Ambalantota",
+      "Tissamaharama",
+      "Beliatta",
+    ],
+    "Jaffna": ["Jaffna", "Chavakachcheri", "Nallur", "Point Pedro", "Kopay"],
+    "Kilinochchi": ["Kilinochchi", "Paranthan", "Pallai", "Iranamadu"],
+    "Mannar": ["Mannar", "Pesalai", "Madhu", "Nanattan"],
+    "Mullaitivu": ["Mullaitivu", "Puthukkudiyiruppu", "Oddusuddan"],
+    "Vavuniya": ["Vavuniya", "Cheddikulam", "Nedunkeni"],
+    "Trincomalee": ["Trincomalee", "Kantale", "Kinniya", "Muttur"],
+    "Batticaloa": ["Batticaloa", "Kalkudah", "Valaichchenai", "Eravur"],
+    "Ampara": ["Ampara", "Kalmunai", "Akkaraipattu", "Pottuvil"],
+    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Polgahawela"],
+    "Puttalam": ["Puttalam", "Chilaw", "Dankotuwa", "Wennappuwa"],
+    "Anuradhapura": ["Anuradhapura", "Mihintale", "Kekirawa", "Medawachchiya"],
+    "Polonnaruwa": ["Polonnaruwa", "Hingurakgoda", "Kaduruwela", "Bakamuna"],
+    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada"],
+    "Monaragala": ["Monaragala", "Wellawaya", "Bibile", "Buttala"],
+    "Ratnapura": ["Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla"],
+    "Kegalle": ["Kegalle", "Mawanella", "Rambukkana", "Warakapola"],
+    // Add other districts and cities here as per your need
   };
 
-  // Sample list of wanted waste types
-  final List<Map<String, String>> allWantedItems = [
-    {
-      "title": "Organic Waste",
-      "name": "John",
-      "district": "Colombo",
-      "city": "Colombo 1",
-    },
-    {
-      "title": "Plastic Waste",
-      "name": "Sarah",
-      "district": "Gampaha",
-      "city": "Negombo",
-    },
-    {
-      "title": "Metal Waste",
-      "name": "Mike",
-      "district": "Kandy",
-      "city": "Peradeniya",
-    },
-    {
-      "title": "Agri Waste",
-      "name": "Raj",
-      "district": "Jaffna",
-      "city": "Nallur",
-    },
-    {
-      "title": "Electronic Waste",
-      "name": "Ali",
-      "district": "Galle",
-      "city": "Unawatuna",
-    },
-  ];
-
-  // Filtered waste types
-  List<Map<String, String>> filteredItems = [];
-
-  // Selected district and city
   String? selectedDistrict;
   String? selectedCity;
-
-  @override
-  void initState() {
-    super.initState();
-    filteredItems = List.from(allWantedItems); // Show all items initially
-  }
-
-  void filterItems() {
-    setState(() {
-      filteredItems =
-          allWantedItems.where((item) {
-            return (selectedDistrict == null ||
-                    item["district"] == selectedDistrict) &&
-                (selectedCity == null || item["city"] == selectedCity);
-          }).toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +66,7 @@ class _WantedPageState extends State<WantedPage> {
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
         title: const Text(
-          "Wanted",
+          "Wanted Sales",
           style: TextStyle(color: Colors.white, fontSize: 22),
         ),
         centerTitle: true,
@@ -91,66 +76,44 @@ class _WantedPageState extends State<WantedPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Filter Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  // District Dropdown
-                  _buildDistrictDropdown(),
-                  const SizedBox(height: 5),
-
-                  // City Dropdown
-                  _buildCityDropdown(),
-                  const SizedBox(height: 5),
-
-                  // Filter Button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: filterItems,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        "Filter",
+            _buildFilters(),
+            const SizedBox(height: 10),
+            const Divider(color: Colors.white, thickness: 2),
+            Expanded(
+              child: StreamBuilder(
+                stream: ServiceRequestService().fetchServiceRequests(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No wanted services found",
                         style: TextStyle(color: Colors.white),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 15),
-            const Divider(color: Colors.white, thickness: 2),
-            const SizedBox(height: 10),
+                    );
+                  }
+                  final services =
+                      snapshot.data!.docs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return (selectedDistrict == null ||
+                                data['location'] == selectedDistrict) &&
+                            (selectedCity == null ||
+                                data['city'] == selectedCity);
+                      }).toList();
 
-            // Filtered Waste Types List
-            Expanded(
-              child:
-                  filteredItems.isNotEmpty
-                      ? ListView.builder(
-                        itemCount: filteredItems.length,
-                        itemBuilder: (context, index) {
-                          return _buildWantedCard(filteredItems[index]);
-                        },
-                      )
-                      : const Center(
-                        child: Text(
-                          "No waste types found",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
+                  return ListView.builder(
+                    itemCount: services.length,
+                    itemBuilder: (context, index) {
+                      final service =
+                          services[index].data() as Map<String, dynamic>;
+                      return _buildWantedCard(service);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -158,92 +121,84 @@ class _WantedPageState extends State<WantedPage> {
     );
   }
 
-  // Dropdown for selecting district
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          _buildDistrictDropdown(),
+          const SizedBox(height: 5),
+          _buildCityDropdown(),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end, // Align to right
+            children: [
+              ElevatedButton(
+                onPressed: _applyFilters,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white, // White text color
+                ),
+                child: const Text("Filter"),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDistrictDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "District",
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
-        const SizedBox(height: 5),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonFormField<String>(
-            dropdownColor: Colors.grey[800],
-            decoration: const InputDecoration(border: InputBorder.none),
-            style: const TextStyle(color: Colors.white),
-            value: selectedDistrict,
-            hint: const Text(
-              "Select District",
-              style: TextStyle(color: Colors.white),
-            ),
-            items:
-                districtCities.keys.map((district) {
-                  return DropdownMenuItem(
-                    value: district,
-                    child: Text(district),
-                  );
-                }).toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedDistrict = value;
-                selectedCity =
-                    null; // Reset city selection when district changes
-              });
-            },
-          ),
-        ),
-      ],
+    return DropdownButtonFormField<String>(
+      dropdownColor: Colors.grey[800],
+      value: selectedDistrict,
+      hint: const Text(
+        "Select District",
+        style: TextStyle(color: Colors.white),
+      ),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+      items:
+          districtCities.keys
+              .map(
+                (district) =>
+                    DropdownMenuItem(value: district, child: Text(district)),
+              )
+              .toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedDistrict = value;
+          selectedCity = null; // Reset city when district changes
+        });
+      },
     );
   }
 
-  // Dropdown for selecting city
   Widget _buildCityDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("City", style: TextStyle(color: Colors.white, fontSize: 16)),
-        const SizedBox(height: 5),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonFormField<String>(
-            dropdownColor: Colors.grey[800],
-            decoration: const InputDecoration(border: InputBorder.none),
-            style: const TextStyle(color: Colors.white),
-            value: selectedCity,
-            hint: const Text(
-              "Select City",
-              style: TextStyle(color: Colors.white),
-            ),
-            items:
-                selectedDistrict != null
-                    ? districtCities[selectedDistrict]!.map((city) {
-                      return DropdownMenuItem(value: city, child: Text(city));
-                    }).toList()
-                    : [],
-            onChanged: (value) {
-              setState(() {
-                selectedCity = value;
-              });
-            },
-          ),
-        ),
-      ],
+    return DropdownButtonFormField<String>(
+      dropdownColor: Colors.grey[800],
+      value: selectedCity,
+      hint: const Text("Select City", style: TextStyle(color: Colors.white)),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+      items:
+          selectedDistrict != null
+              ? districtCities[selectedDistrict]!
+                  .map(
+                    (city) => DropdownMenuItem(
+                      value: city,
+                      child: Text(city, style: TextStyle(color: Colors.white)),
+                    ),
+                  )
+                  .toList()
+              : [],
+      onChanged: (value) => setState(() => selectedCity = value),
     );
   }
 
-  // Waste Type Card
-  Widget _buildWantedCard(Map<String, String> item) {
+  Widget _buildWantedCard(Map<String, dynamic> service) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -254,7 +209,6 @@ class _WantedPageState extends State<WantedPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile Image Placeholder
           Container(
             width: 50,
             height: 50,
@@ -264,37 +218,43 @@ class _WantedPageState extends State<WantedPage> {
             ),
           ),
           const SizedBox(width: 10),
-
-          // Waste Type Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item["title"]!,
+                  service['name'] ?? "Unknown",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 5),
                 Text(
-                  "Requested by: ${item["name"]}",
+                  "Location: ${service['location']}, ${service['city']}",
                   style: const TextStyle(color: Colors.white),
                 ),
                 Text(
-                  "Location: ${item["district"]}, ${item["city"]}",
+                  "Weight: ${service['weight']} kg",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                  "Description: ${service['description']}",
                   style: const TextStyle(color: Colors.white),
                 ),
               ],
             ),
           ),
-
-          // Call Icon
           const Icon(Icons.call, color: Colors.white),
         ],
       ),
     );
+  }
+
+  void _applyFilters() {
+    // This method will handle the applying of filters
+    setState(() {
+      // Trigger re-build after filter selection
+    });
   }
 }

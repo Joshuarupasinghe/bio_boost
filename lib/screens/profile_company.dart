@@ -3,6 +3,7 @@ import 'package:bio_boost/screens/wishlist.dart';
 import 'package:flutter/material.dart';
 
 class CompanyProfilePage extends StatelessWidget {
+  const CompanyProfilePage({super.key}); // Add this line
   @override
   Widget build(BuildContext context) {
     return Scaffold(

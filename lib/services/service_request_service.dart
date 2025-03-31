@@ -33,7 +33,7 @@ class ServiceRequestService {
     try {
       QuerySnapshot querySnapshot = await _firestore
           .collection('serviceRequests')
-          .orderBy('timestamp', descending: true)
+          .orderBy('timestamp', descending: false)
           .get();
       
       return querySnapshot.docs
@@ -53,7 +53,7 @@ class ServiceRequestService {
       QuerySnapshot querySnapshot = await _firestore
           .collection('serviceRequests')
           .where('name', isEqualTo: name)
-          .orderBy('timestamp', descending: true)
+          .orderBy('timestamp', descending: false)
           .get();
       
       return querySnapshot.docs
@@ -92,5 +92,13 @@ class ServiceRequestService {
     } catch (e) {
       throw Exception('Failed to delete service request: $e');
     }
+  }
+
+  // Stream service requests to get real-time updates
+  Stream<QuerySnapshot> fetchServiceRequests() {
+    return _firestore
+        .collection('serviceRequests')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
   }
 }
