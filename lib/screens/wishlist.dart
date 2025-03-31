@@ -101,7 +101,6 @@ class WishlistPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.teal,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(Icons.call, color: Colors.white),
@@ -111,10 +110,9 @@ class WishlistPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.red,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                          child: const Icon(Icons.delete, color: Colors.red),
                         ),
                       ],
                     ),
