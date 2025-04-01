@@ -12,7 +12,8 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController companyNameController = TextEditingController();
@@ -25,14 +26,35 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
-  // District and City Data
-  final Map<String, List<String>> districtCities = {
-    'Colombo': ['Colombo 1', 'Colombo 2', 'Nugegoda', 'Maharagama'],
-    'Gampaha': ['Gampaha', 'Negombo', 'Ja-Ela', 'Wattala'],
-    'Kandy': ['Kandy', 'Peradeniya', 'Katugastota', 'Gampola'],
-    'Galle': ['Galle', 'Hikkaduwa', 'Ambalangoda', 'Unawatuna'],
-    'Jaffna': ['Jaffna', 'Nallur', 'Chavakachcheri', 'Point Pedro'],
-  };
+ // District and City Data
+final Map<String, List<String>> districtCities = {
+  'Ampara': ['Ampara', 'Kalmunai', 'Pottuvil', 'Akkaraipattu', 'Sammanthurai', 'Deegavapi', 'Uhana'],
+  'Anuradhapura': ['Anuradhapura', 'Mihintale', 'Kekirawa', 'Medawachchiya', 'Galnewa', 'Thalawa'],
+  'Badulla': ['Badulla', 'Bandarawela', 'Haputale', 'Ella', 'Mahiyanganaya', 'Welimada', 'Passara'],
+  'Batticaloa': ['Batticaloa', 'Kaluwanchikudy', 'Eravur', 'Valachchenai', 'Kattankudy', 'Oddamavadi'],
+  'Colombo': ['Colombo', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Maharagama', 'Kotte', 'Nugegoda'],
+  'Galle': ['Galle', 'Unawatuna', 'Hikkaduwa', 'Ambalangoda', 'Bentota', 'Karapitiya', 'Baddegama'],
+  'Gampaha': ['Gampaha', 'Negombo', 'Wattala', 'Ja-Ela', 'Minuwangoda', 'Kelaniya', 'Katunayake'],
+  'Hambantota': ['Hambantota', 'Tangalle', 'Tissamaharama', 'Beliatta', 'Kataragama', 'Ambalantota'],
+  'Jaffna': ['Jaffna', 'Chavakachcheri', 'Point Pedro', 'Nallur', 'Kopay', 'Velanai', 'Kayts'],
+  'Kalutara': ['Kalutara', 'Panadura', 'Horana', 'Beruwala', 'Aluthgama', 'Wadduwa', 'Matugama'],
+  'Kandy': ['Kandy', 'Peradeniya', 'Katugastota', 'Gampola', 'Nawalapitiya', 'Wattegama', 'Kundasale'],
+  'Kegalle': ['Kegalle', 'Mawanella', 'Warakapola', 'Rambukkana', 'Aranayaka', 'Galigamuwa'],
+  'Kilinochchi': ['Kilinochchi', 'Paranthan', 'Mallavi', 'Pooneryn', 'Dharmapuram'],
+  'Kurunegala': ['Kurunegala', 'Pannala', 'Kuliyapitiya', 'Narammala', 'Polgahawela', 'Melsiripura', 'Ibbagamuwa'],
+  'Mannar': ['Mannar', 'Murunkan', 'Pesalai', 'Nanattan', 'Talaimannar'],
+  'Matale': ['Matale', 'Dambulla', 'Sigiriya', 'Rattota', 'Ukuwela', 'Galewela', 'Pallepola'],
+  'Matara': ['Matara', 'Weligama', 'Mirissa', 'Akuressa', 'Dikwella', 'Deniyaya', 'Hakmana'],
+  'Monaragala': ['Monaragala', 'Wellawaya', 'Bibile', 'Madulla', 'Medagama', 'Siyambalanduwa'],
+  'Mullaitivu': ['Mullaitivu', 'Puthukudiyiruppu', 'Oddusuddan', 'Mallavi', 'Thunukkai'],
+  'Nuwara Eliya': ['Nuwara Eliya', 'Hatton', 'Talawakele', 'Kotagala', 'Ragala', 'Ginigathena', 'Walapane'],
+  'Polonnaruwa': ['Polonnaruwa', 'Hingurakgoda', 'Medirigiriya', 'Thamankaduwa', 'Dimbulagala'],
+  'Puttalam': ['Puttalam', 'Chilaw', 'Wennappuwa', 'Marawila', 'Anamaduwa', 'Kalpitiya'],
+  'Ratnapura': ['Ratnapura', 'Eheliyagoda', 'Pelmadulla', 'Balangoda', 'Kahawatta', 'Godakawela'],
+  'Trincomalee': ['Trincomalee', 'Kinniya', 'Muttur', 'Nilaveli', 'Thampalakamam', 'Kuchchaveli'],
+  'Vavuniya': ['Vavuniya', 'Omanthai', 'Cheddikulam', 'Nedunkeni'],
+};
+
 
   String? selectedDistrict;
   String? selectedCity;
@@ -40,9 +62,9 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _signUp() async {
     if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Passwords do not match!")));
       return;
     }
 
@@ -54,40 +76,49 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
       // Determine collection based on user type
       String collection = userType == "Buyer" ? "buyers" : "sellers";
 
-      await _firestore.collection(collection).doc(userCredential.user!.uid).set({
-        "firstName": firstNameController.text.trim(),
-        "lastName": lastNameController.text.trim(),
-        "companyName": companyNameController.text.trim(),
-        "phoneNumber": phoneNumberController.text.trim(),
-        "address": addressController.text.trim(),
-        "district": selectedDistrict,
-        "city": selectedCity,
-        "email": emailController.text.trim(),
-        "userType": userType,
-        "createdAt": DateTime.now(),
-      });
+      await _firestore
+          .collection(collection)
+          .doc(userCredential.user!.uid)
+          .set({
+            "firstName": firstNameController.text.trim(),
+            "lastName": lastNameController.text.trim(),
+            "companyName": companyNameController.text.trim(),
+            "phoneNumber": phoneNumberController.text.trim(),
+            "address": addressController.text.trim(),
+            "district": selectedDistrict,
+            "city": selectedCity,
+            "email": emailController.text.trim(),
+            "userType": userType,
+            "createdAt": DateTime.now(),
+          });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sign-Up Successful!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Sign-Up Successful!")));
 
       Navigator.pop(context); // Navigate back to Sign-In Page
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     }
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool obscureText = false, Widget? suffixIcon}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool obscureText = false,
+    Widget? suffixIcon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -116,7 +147,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.teal),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 suffixIcon: suffixIcon,
               ),
             ),
@@ -162,7 +196,9 @@ class _SignUpPageState extends State<SignUpPage> {
               // City Dropdown (Only show cities for selected district)
               _buildDropdown(
                 "City",
-                selectedDistrict != null ? districtCities[selectedDistrict]! : [],
+                selectedDistrict != null
+                    ? districtCities[selectedDistrict]!
+                    : [],
                 selectedCity,
                 (newValue) {
                   setState(() {
@@ -194,7 +230,9 @@ class _SignUpPageState extends State<SignUpPage> {
                 obscureText: !_confirmPasswordVisible,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _confirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _confirmPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                     color: Colors.white,
                   ),
                   onPressed: () {
@@ -208,7 +246,10 @@ class _SignUpPageState extends State<SignUpPage> {
               // Radio Button for Buyer or Seller
               Row(
                 children: [
-                  const Text("Who am I?", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  const Text(
+                    "Who am I?",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                   const SizedBox(width: 20),
                   Radio(
                     value: "Buyer",
@@ -260,7 +301,12 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildDropdown(String label, List<String> items, String? selectedValue, Function(String?) onChanged) {
+  Widget _buildDropdown(
+    String label,
+    List<String> items,
+    String? selectedValue,
+    Function(String?) onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -283,14 +329,21 @@ class _SignUpPageState extends State<SignUpPage> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
-              items: items.map((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item, style: const TextStyle(color: Colors.white)),
-                );
-              }).toList(),
+              items:
+                  items.map((String item) {
+                    return DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(
+                        item,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }).toList(),
               onChanged: onChanged,
               dropdownColor: Colors.grey[800],
             ),
