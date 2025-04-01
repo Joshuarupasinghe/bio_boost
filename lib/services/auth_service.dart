@@ -6,6 +6,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Sign Up Method
   Future<User?> signUp(UserModel user, String password) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -16,11 +17,12 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).set(user.toMap());
       return result.user;
     } catch (e) {
-      print(e.toString());
+      print("Sign Up Error: ${e.toString()}");
       return null;
     }
   }
 
+  // Sign In Method
   Future<User?> signIn(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -29,8 +31,18 @@ class AuthService {
       );
       return result.user;
     } catch (e) {
-      print(e.toString());
+      print("Sign In Error: ${e.toString()}");
       return null;
     }
+  }
+
+  // Sign Out Method
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  // Get Current User Stream (Listen for Auth Changes)
+  Stream<User?> get userStream {
+    return _auth.authStateChanges();
   }
 }
