@@ -22,7 +22,6 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
   ];
 
   final WantedSalesService _wantedSalesService = WantedSalesService();
-
   final ServiceRequestService _serviceRequestService = ServiceRequestService();
   
   String? selectedService;
@@ -33,128 +32,114 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
   bool _isLoading = false;
 
   @override
+  void dispose() {
+    // Dispose controllers to prevent memory leaks
+    nameController.dispose();
+    locationController.dispose();
+    weightController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SingleChildScrollView(
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              decoration: BoxDecoration(
-                color: Colors.grey[850],
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 10,
-                    spreadRadius: 3,
-                    offset: Offset(0, 4),
+      appBar: AppBar(),
+      backgroundColor: Colors.grey[900],
+      body: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: SingleChildScrollView(
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Text(
+                  "Add My Services",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    "Add My Services",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 12),
-
-                  // Name Input
-                  buildLabel("Name"),
-                  buildTextField(nameController, "Enter your name", Icons.person),
-                  SizedBox(height: 12),
-
-                  // Location Input
-                  buildLabel("Location"),
-                  buildTextField(locationController, "Enter your location", Icons.location_on),
-                  SizedBox(height: 12),
-
-                  // Dropdown Field
-                  buildLabel("What Do You Need?"),
-                  DropdownButtonFormField<String>(
-                    decoration: buildInputDecoration(),
-                    dropdownColor: Colors.grey[800],
-                    value: selectedService,
-                    items: services.map((String service) {
-                      return DropdownMenuItem<String>(
-                        value: service,
-                        child: Text(
-                          service,
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        selectedService = newValue;
-                      });
-                    },
-                    isExpanded: true,
-                  ),
-                  SizedBox(height: 12),
-
-                  // Weight Input
-                  buildLabel("Weight"),
-                  buildTextField(weightController, "Enter weight (kg)", Icons.scale),
-
-                  SizedBox(height: 12),
-
-                  // Description Input
-                  buildLabel("Explain what you need (briefly)"),
-                  buildTextField(descriptionController, "Enter description", Icons.edit, maxLines: 2),
-
-                  SizedBox(height: 16),
-
-                  // Submit Button
-                  GestureDetector(
-                    onTap: _isLoading ? null : _submitServiceRequest,
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF4CAF50).withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12),
+      
+                // Name Input
+                buildLabel("Name"),
+                buildTextField(nameController, "Enter your name", Icons.person),
+                SizedBox(height: 12),
+      
+                // Location Input
+                buildLabel("Location"),
+                buildTextField(locationController, "Enter your location", Icons.location_on),
+                SizedBox(height: 12),
+      
+                // Dropdown Field
+                buildLabel("What Do You Need?"),
+                DropdownButtonFormField<String>(
+                  decoration: buildInputDecoration(),
+                  dropdownColor: Colors.grey[800],
+                  value: selectedService,
+                  items: services.map((String service) {
+                    return DropdownMenuItem<String>(
+                      value: service,
+                      child: Text(
+                        service,
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
-                      child: Center(
-                        child: _isLoading 
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              "POST",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedService = newValue;
+                    });
+                  },
+                  isExpanded: true,
+                ),
+                SizedBox(height: 12),
+      
+                // Weight Input
+                buildLabel("Weight"),
+                buildTextField(weightController, "Enter weight (kg)", Icons.scale),
+      
+                SizedBox(height: 12),
+      
+                // Description Input
+                buildLabel("Explain what you need (briefly)"),
+                buildTextField(descriptionController, "Enter description", Icons.edit, maxLines: 2),
+      
+                SizedBox(height: 16),
+      
+                // Submit Button
+                GestureDetector(
+                  onTap: _isLoading ? null : _submitServiceRequest,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.teal,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: _isLoading 
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            "POST",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                      ),
+                          ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -220,7 +205,7 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
         locationController.clear();
         weightController.clear();
         descriptionController.clear();
-        _isLoading = false;  // Make sure to set loading back to false
+        _isLoading = false;
       });
     } catch (e) {
       _showErrorToast("Error: ${e.toString()}");

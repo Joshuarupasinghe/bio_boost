@@ -14,6 +14,17 @@ class _WantedCompanyPageState extends State<WantedCompanyPage> {
   List<Map<String, dynamic>> _serviceRequests = [];
   bool _isLoading = true;
 
+  // District and City filter data
+  final Map<String, List<String>> districtCities = {
+    "Colombo": ["Colombo", "Dehiwala-Mount Lavinia", "Sri Jayawardenepura Kotte"],
+    "Gampaha": ["Negombo", "Gampaha", "Ja-Ela"],
+    "Kandy": ["Kandy", "Katugastota", "Peradeniya"],
+    "Galle": ["Elpitiya"],
+  };
+
+  String? selectedDistrict;
+  String? selectedCity;
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +42,6 @@ class _WantedCompanyPageState extends State<WantedCompanyPage> {
       setState(() {
         _isLoading = false;
       });
-      // Handle error (e.g., show a snackbar)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load service requests: $e')),
       );
@@ -59,160 +69,192 @@ class _WantedCompanyPageState extends State<WantedCompanyPage> {
           );
         },
         backgroundColor: Colors.teal,
-        child: Icon(Icons.add),
+        child: Icon(Icons.add, color: Colors.white, size: 30),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Filter Section
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildDropdown("District"),
-                          const SizedBox(height: 10),
-                          _buildDropdown("City"),
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // Add filter logic here
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              child: const Text(
-                                "Filter",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildFilters(),
+                  const SizedBox(height: 20),
 
-                    // List of Wanted Items
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: _serviceRequests.length,
-                        itemBuilder: (context, index) {
-                          return _buildWantedCard(_serviceRequests[index]);
-                        },
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _filteredServiceRequests().length,
+                      itemBuilder: (context, index) {
+                        return _buildWantedCard(
+                            _filteredServiceRequests()[index]);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  // Filter Section
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          _buildDistrictDropdown(),
+          const SizedBox(height: 10),
+          _buildCityDropdown(),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text(
+                "Filter",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDistrictDropdown() {
+    return DropdownButtonFormField<String>(
+      dropdownColor: Colors.grey[800],
+      value: selectedDistrict,
+      hint: const Text(
+        "Select District",
+        style: TextStyle(color: Colors.white),
+      ),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+      items: districtCities.keys
+          .map((district) =>
+              DropdownMenuItem(value: district, child: Text(district)))
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedDistrict = value;
+          selectedCity = null;
+        });
+      },
+    );
+  }
+
+  Widget _buildCityDropdown() {
+    return DropdownButtonFormField<String>(
+      dropdownColor: Colors.grey[800],
+      value: selectedCity,
+      hint: const Text("Select City", style: TextStyle(color: Colors.white)),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+      items: selectedDistrict != null
+          ? districtCities[selectedDistrict]!
+              .map((city) =>
+                  DropdownMenuItem(value: city, child: Text(city)))
+              .toList()
+          : [],
+      onChanged: (value) => setState(() => selectedCity = value),
+    );
+  }
+
+  List<Map<String, dynamic>> _filteredServiceRequests() {
+    return _serviceRequests.where((request) {
+      final location = request['location'] ?? '';
+      final city = request['city'] ?? '';
+      return (selectedDistrict == null || location == selectedDistrict) &&
+          (selectedCity == null || city == selectedCity);
+    }).toList();
+  }
+}
+
+  Widget _buildWantedCard(Map<String, dynamic> data) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Text(
+                "Needs ${data['serviceType'] ?? '(Agri waste type)'}",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Name: ${data['name'] ?? 'N/A'}",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      "Location: ${data['location'] ?? 'N/A'}",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      "Weight: ${data['weight'] ?? 'N/A'} kg",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      data['description'] ?? 'No description provided',
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 180, 175, 175),
                       ),
                     ),
                   ],
                 ),
               ),
-    );
-  }
 
-  // Function for dropdown fields
-  Widget _buildDropdown(String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        const SizedBox(height: 5),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            borderRadius: BorderRadius.circular(8),
+              Column(
+                children: [
+                  const Icon(Icons.call, color: Colors.white, size: 30),
+                ],
+              ),
+            ],
           ),
-          child: DropdownButtonFormField<String>(
-            dropdownColor: Colors.grey[800],
-            decoration: const InputDecoration(border: InputBorder.none),
-            style: const TextStyle(color: Colors.white),
-            value: null,
-            items:
-                ['Option 1', 'Option 2'].map((option) {
-                  return DropdownMenuItem(value: option, child: Text(option));
-                }).toList(),
-            onChanged: (value) {
-              // Handle dropdown selection
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Function for Wanted Cards
-  Widget _buildWantedCard(Map<String, dynamic> data) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[850],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black, // Placeholder color
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Text Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Needs ${data['serviceType'] ?? 'Unknown'}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  "Name: ${data['name'] ?? 'N/A'}",
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Text(
-                  "Location: ${data['location'] ?? 'N/A'}",
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Text(
-                  "Weight: ${data['weight'] ?? 'N/A'} kg",
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Text(
-                  data['description'] ?? 'No description provided',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-
-          // Call Icon
-          const Icon(Icons.call, color: Colors.white),
         ],
       ),
     );
   }
-}
