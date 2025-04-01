@@ -41,7 +41,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   carousel_slider: ^5.0.0
   image_picker: ^1.1.2
-  fluttertoast: ^8.2.4  # Add this line
 
 dev_dependencies:
   flutter_test:
