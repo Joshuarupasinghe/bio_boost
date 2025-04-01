@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/seller_auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BecomeSellerPage extends StatefulWidget {
   const BecomeSellerPage({super.key});
@@ -14,19 +14,16 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final SellerAuthService _sellerAuthService = SellerAuthService();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Track the status messages
   String authStatus = "";
-  String sellerDataStatus = "";
 
-  /// **Register Seller**
-  void _registerSeller() async {
+  Future<void> _registerSeller() async {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
     String confirmPassword = _confirmPasswordController.text.trim();
+    User? user = FirebaseAuth.instance.currentUser;
 
     if (username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(
@@ -42,29 +39,30 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
       return;
     }
 
-    // Show initial message
-    setState(() {
-      authStatus = "Attempting sign-up for: $username";
-    });
+    if (user == null) {
+      setState(() => authStatus = "❌ User not authenticated!");
+      return;
+    }
 
-    await Future.delayed(Duration(milliseconds: 500)); // Allow UI update
-
-    // Expecting a `User?` instead of a `String?`
-    User? user = await _sellerAuthService.signUpSeller(username, password);
-
-    if (user != null) {
-      // Show success message and delay before navigation
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seller registered successfully!')),
-      );
-
-      await Future.delayed(Duration(seconds: 2)); // Delay before navigating
-      Navigator.pushReplacementNamed(context, '/profile_company');
-    } else {
-      // If sign-up fails, update status
-      setState(() {
-        authStatus = "❌ Registration failed. Try again!";
+    try {
+      // Update Firestore to add 'seller' role
+      DocumentReference userDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      await userDoc.update({
+        'roles': FieldValue.arrayUnion(['seller']), // Add 'seller' role
+        'username': username, // Set seller username
       });
+
+      setState(() => authStatus = "✅ You are now a seller!");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('You are now a seller!')));
+
+      await Future.delayed(const Duration(seconds: 2));
+      Navigator.pushReplacementNamed(context, '/profile_company');
+    } catch (e) {
+      setState(() => authStatus = "❌ Registration failed: ${e.toString()}");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration failed. Try again!')),
       );
@@ -78,7 +76,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
       appBar: AppBar(backgroundColor: Colors.grey[850]),
       body: Center(
         child: SingleChildScrollView(
-          // Wrapped in SingleChildScrollView
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -98,8 +95,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
-
-                // Box containing the form
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -120,9 +115,7 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                         _passwordController,
                         _isPasswordVisible,
                         (value) {
-                          setState(() {
-                            _isPasswordVisible = value;
-                          });
+                          setState(() => _isPasswordVisible = value);
                         },
                       ),
                       const SizedBox(height: 15),
@@ -131,9 +124,7 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                         _confirmPasswordController,
                         _isConfirmPasswordVisible,
                         (value) {
-                          setState(() {
-                            _isConfirmPasswordVisible = value;
-                          });
+                          setState(() => _isConfirmPasswordVisible = value);
                         },
                       ),
                       const SizedBox(height: 30),
@@ -155,18 +146,9 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Display the status messages
                       if (authStatus.isNotEmpty)
                         Text(
                           authStatus,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      if (sellerDataStatus.isNotEmpty)
-                        Text(
-                          sellerDataStatus,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -183,7 +165,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
     );
   }
 
-  // Helper method to build a password field with visibility toggle
   Widget _buildPasswordField(
     String label,
     TextEditingController controller,
@@ -205,9 +186,7 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
             isPasswordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.white,
           ),
-          onPressed: () {
-            onVisibilityChanged(!isPasswordVisible);
-          },
+          onPressed: () => onVisibilityChanged(!isPasswordVisible),
         ),
       ),
     );
