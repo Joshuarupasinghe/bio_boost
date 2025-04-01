@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/data/sales_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class AgriWasteDetailPage extends StatefulWidget {
   final String saleId;
@@ -20,6 +22,29 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
   void initState() {
     super.initState();
     _agriWasteFuture = _salesService.getSalesDetailsById(widget.saleId);
+  }
+
+  //Adding Data to wishlist page using SharedPreferences
+  Future<void> _addToWishlist(Sales agriWaste) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> wishlist = prefs.getStringList('wishlist') ?? [];
+
+    String saleJson = jsonEncode({
+      'id': agriWaste.documentId,
+      'owner': agriWaste.s_ownerName,
+      'location': agriWaste.s_location,
+      'weight': agriWaste.s_weight,
+      'type': agriWaste.s_type,
+      'image': agriWaste.s_mainImage,
+    });
+
+    if (!wishlist.contains(saleJson)) {
+      wishlist.add(saleJson);
+      await prefs.setStringList('wishlist', wishlist);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Added to Wishlist")));
+    }
   }
 
   @override
@@ -198,7 +223,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => _addToWishlist(agriWaste),
                     child: const Text('Add To Wish List'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
