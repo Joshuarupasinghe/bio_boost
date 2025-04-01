@@ -72,15 +72,14 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            SizedBox(height: 20.0),
             Expanded(
-              child: GridView.builder(
-                physics:
-                    const NeverScrollableScrollPhysics(), // Disable scrolling
+              child: GridView.builder(// Disable scrolling
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1.1,
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 15,
+                  childAspectRatio: 1,
                 ),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
@@ -123,11 +122,20 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
             ),
             Column(
               children: [
+                Container(
+                      height: 2, // Thickness of the border
+                      color: Colors.grey[400], // Color of the border
+                    ),
+              ],
+            ),
+            SizedBox(height: 20.0),
+            Column(
+              children: [
                 Stack(
                   children: [
                     SizedBox(
                       width: double.infinity,
-                      height: MediaQuery.of(context).size.height / 5,
+                      height: 170.0,
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: imagePaths.length,
