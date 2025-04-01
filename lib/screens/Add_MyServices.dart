@@ -22,7 +22,6 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
   ];
 
   final WantedSalesService _wantedSalesService = WantedSalesService();
-
   final ServiceRequestService _serviceRequestService = ServiceRequestService();
   
   String? selectedService;
@@ -31,6 +30,16 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
   TextEditingController weightController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    // Dispose controllers to prevent memory leaks
+    nameController.dispose();
+    locationController.dispose();
+    weightController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +205,7 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
         locationController.clear();
         weightController.clear();
         descriptionController.clear();
-        _isLoading = false;  // Make sure to set loading back to false
+        _isLoading = false;
       });
     } catch (e) {
       _showErrorToast("Error: ${e.toString()}");
