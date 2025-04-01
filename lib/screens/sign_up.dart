@@ -25,14 +25,35 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
-  // District and City Data
-  final Map<String, List<String>> districtCities = {
-    'Colombo': ['Colombo 1', 'Colombo 2', 'Nugegoda', 'Maharagama'],
-    'Gampaha': ['Gampaha', 'Negombo', 'Ja-Ela', 'Wattala'],
-    'Kandy': ['Kandy', 'Peradeniya', 'Katugastota', 'Gampola'],
-    'Galle': ['Galle', 'Hikkaduwa', 'Ambalangoda', 'Unawatuna'],
-    'Jaffna': ['Jaffna', 'Nallur', 'Chavakachcheri', 'Point Pedro'],
-  };
+ // District and City Data
+final Map<String, List<String>> districtCities = {
+  'Ampara': ['Ampara', 'Kalmunai', 'Pottuvil', 'Akkaraipattu', 'Sammanthurai', 'Deegavapi', 'Uhana'],
+  'Anuradhapura': ['Anuradhapura', 'Mihintale', 'Kekirawa', 'Medawachchiya', 'Galnewa', 'Thalawa'],
+  'Badulla': ['Badulla', 'Bandarawela', 'Haputale', 'Ella', 'Mahiyanganaya', 'Welimada', 'Passara'],
+  'Batticaloa': ['Batticaloa', 'Kaluwanchikudy', 'Eravur', 'Valachchenai', 'Kattankudy', 'Oddamavadi'],
+  'Colombo': ['Colombo', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Maharagama', 'Kotte', 'Nugegoda'],
+  'Galle': ['Galle', 'Unawatuna', 'Hikkaduwa', 'Ambalangoda', 'Bentota', 'Karapitiya', 'Baddegama'],
+  'Gampaha': ['Gampaha', 'Negombo', 'Wattala', 'Ja-Ela', 'Minuwangoda', 'Kelaniya', 'Katunayake'],
+  'Hambantota': ['Hambantota', 'Tangalle', 'Tissamaharama', 'Beliatta', 'Kataragama', 'Ambalantota'],
+  'Jaffna': ['Jaffna', 'Chavakachcheri', 'Point Pedro', 'Nallur', 'Kopay', 'Velanai', 'Kayts'],
+  'Kalutara': ['Kalutara', 'Panadura', 'Horana', 'Beruwala', 'Aluthgama', 'Wadduwa', 'Matugama'],
+  'Kandy': ['Kandy', 'Peradeniya', 'Katugastota', 'Gampola', 'Nawalapitiya', 'Wattegama', 'Kundasale'],
+  'Kegalle': ['Kegalle', 'Mawanella', 'Warakapola', 'Rambukkana', 'Aranayaka', 'Galigamuwa'],
+  'Kilinochchi': ['Kilinochchi', 'Paranthan', 'Mallavi', 'Pooneryn', 'Dharmapuram'],
+  'Kurunegala': ['Kurunegala', 'Pannala', 'Kuliyapitiya', 'Narammala', 'Polgahawela', 'Melsiripura', 'Ibbagamuwa'],
+  'Mannar': ['Mannar', 'Murunkan', 'Pesalai', 'Nanattan', 'Talaimannar'],
+  'Matale': ['Matale', 'Dambulla', 'Sigiriya', 'Rattota', 'Ukuwela', 'Galewela', 'Pallepola'],
+  'Matara': ['Matara', 'Weligama', 'Mirissa', 'Akuressa', 'Dikwella', 'Deniyaya', 'Hakmana'],
+  'Monaragala': ['Monaragala', 'Wellawaya', 'Bibile', 'Madulla', 'Medagama', 'Siyambalanduwa'],
+  'Mullaitivu': ['Mullaitivu', 'Puthukudiyiruppu', 'Oddusuddan', 'Mallavi', 'Thunukkai'],
+  'Nuwara Eliya': ['Nuwara Eliya', 'Hatton', 'Talawakele', 'Kotagala', 'Ragala', 'Ginigathena', 'Walapane'],
+  'Polonnaruwa': ['Polonnaruwa', 'Hingurakgoda', 'Medirigiriya', 'Thamankaduwa', 'Dimbulagala'],
+  'Puttalam': ['Puttalam', 'Chilaw', 'Wennappuwa', 'Marawila', 'Anamaduwa', 'Kalpitiya'],
+  'Ratnapura': ['Ratnapura', 'Eheliyagoda', 'Pelmadulla', 'Balangoda', 'Kahawatta', 'Godakawela'],
+  'Trincomalee': ['Trincomalee', 'Kinniya', 'Muttur', 'Nilaveli', 'Thampalakamam', 'Kuchchaveli'],
+  'Vavuniya': ['Vavuniya', 'Omanthai', 'Cheddikulam', 'Nedunkeni'],
+};
+
 
   String? selectedDistrict;
   String? selectedCity;
