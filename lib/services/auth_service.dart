@@ -9,7 +9,9 @@ class AuthService {
   Future<User?> signUp(UserModel user, String password) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
-          email: user.email, password: password);
+        email: user.email,
+        password: password,
+      );
       user = user.copyWith(uid: result.user!.uid);
       await _firestore.collection('users').doc(user.uid).set(user.toMap());
       return result.user;
@@ -21,8 +23,10 @@ class AuthService {
 
   Future<User?> signIn(String email, String password) async {
     try {
-      UserCredential result =
-          await _auth.signInWithEmailAndPassword(email: email, password: password);
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       return result.user;
     } catch (e) {
       print(e.toString());

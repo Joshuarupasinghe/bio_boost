@@ -10,8 +10,149 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
   String? selectedCity;
   String? selectedWasteType;
 
-  List<String> districts = ["District 1", "District 2", "District 3"];
-  List<String> cities = ["City A", "City B", "City C"];
+  List<String> districts = [
+    "Colombo",
+    "Gampaha",
+    "Kalutara",
+    "Kandy",
+    "Matale",
+    "Nuwara Eliya",
+    "Galle",
+    "Matara",
+    "Hambantota",
+    "Jaffna",
+    "Kilinochchi",
+    "Mannar",
+    "Mullaitivu",
+    "Vavuniya",
+    "Trincomalee",
+    "Batticaloa",
+    "Ampara",
+    "Kurunegala",
+    "Puttalam",
+    "Anuradhapura",
+    "Polonnaruwa",
+    "Badulla",
+    "Monaragala",
+    "Ratnapura",
+    "Kegalle",
+  ];
+
+  Map<String, List<String>> districtCities = {
+    "Colombo": [
+      "Colombo",
+      "Dehiwala-Mount Lavinia",
+      "Sri Jayawardenepura Kotte",
+      "Moratuwa",
+      "Kolonnawa",
+      "Ratmalana",
+      "Nugegoda",
+      "Maharagama",
+      "Kotikawatta",
+    ],
+    "Gampaha": [
+      "Gampaha",
+      "Negombo",
+      "Kelaniya",
+      "Kadawatha",
+      "Minuwangoda",
+      "Kiribathgoda",
+      "Ja-Ela",
+      "Wattala",
+      "Biyagama",
+    ],
+    "Kalutara": [
+      "Kalutara",
+      "Panadura",
+      "Horana",
+      "Matugama",
+      "Beruwala",
+      "Aluthgama",
+      "Bandaragama",
+      "Ingiriya",
+      "Bulathsinhala",
+    ],
+    "Kandy": [
+      "Kandy",
+      "Katugastota",
+      "Peradeniya",
+      "Gampola",
+      "Kundasale",
+      "Kadugannawa",
+      "Nawalapitiya",
+      "Pilimatalawa",
+      "Akurana",
+    ],
+    "Matale": [
+      "Matale",
+      "Dambulla",
+      "Sigiriya",
+      "Rattota",
+      "Galewela",
+      "Palapathwela",
+      "Naula",
+      "Ukuwela",
+    ],
+    "Nuwara Eliya": [
+      "Nuwara Eliya",
+      "Hatton",
+      "Talawakelle",
+      "Ginigathena",
+      "Kandapola",
+      "Maskeliya",
+      "Kotagala",
+      "Agarapatana",
+    ],
+
+    "Galle": [
+      "Galle",
+      "Ambalangoda",
+      "Hikkaduwa",
+      "Elpitiya",
+      "Baddegama",
+      "Udugama",
+      "Ahangama",
+      "Karapitiya",
+    ],
+    "Matara": [
+      "Matara",
+      "Weligama",
+      "Dikwella",
+      "Akuressa",
+      "Hakmana",
+      "Kamburupitiya",
+      "Thihagoda",
+      "Dickwella",
+    ],
+    "Hambantota": [
+      "Hambantota",
+      "Tangalle",
+      "Ambalantota",
+      "Tissamaharama",
+      "Beliatta",
+      "Weeraketiya",
+      "Walasmulla",
+    ],
+    "Jaffna": ["Jaffna", "Chavakachcheri", "Nallur", "Point Pedro", "Kopay"],
+    "Kilinochchi": ["Kilinochchi", "Paranthan", "Pallai", "Iranamadu"],
+    "Mannar": ["Mannar", "Pesalai", "Madhu", "Nanattan"],
+    "Mullaitivu": ["Mullaitivu", "Puthukkudiyiruppu", "Oddusuddan"],
+    "Vavuniya": ["Vavuniya", "Cheddikulam", "Nedunkeni"],
+    "Trincomalee": ["Trincomalee", "Kantale", "Kinniya", "Muttur"],
+    "Batticaloa": ["Batticaloa", "Kalkudah", "Valaichchenai", "Eravur"],
+    "Ampara": ["Ampara", "Kalmunai", "Akkaraipattu", "Pottuvil"],
+    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Polgahawela"],
+    "Puttalam": ["Puttalam", "Chilaw", "Dankotuwa", "Wennappuwa"],
+    "Anuradhapura": ["Anuradhapura", "Mihintale", "Kekirawa", "Medawachchiya"],
+    "Polonnaruwa": ["Polonnaruwa", "Hingurakgoda", "Kaduruwela", "Bakamuna"],
+    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada"],
+    "Monaragala": ["Monaragala", "Wellawaya", "Bibile", "Buttala"],
+    "Ratnapura": ["Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla"],
+    "Kegalle": ["Kegalle", "Mawanella", "Rambukkana", "Warakapola"],
+  };
+
+  List<String> cities = [];
+
   List<String> wasteTypes = [
     "Paddy Husk & Straw",
     "Coconut Husks & Shells",
@@ -28,12 +169,11 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900], // Background color of the page
+      backgroundColor: Colors.grey[900],
       body: Padding(
         padding: EdgeInsets.all(10),
         child: Column(
           children: [
-            // District & City Filter Section
             Container(
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -42,12 +182,16 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
               ),
               child: Column(
                 children: [
-                  // District Dropdown
                   DropdownButtonFormField<String>(
                     dropdownColor: Colors.grey[700],
                     value: selectedDistrict,
-                    onChanged:
-                        (value) => setState(() => selectedDistrict = value),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDistrict = value;
+                        selectedCity = null;
+                        cities = districtCities[value] ?? [];
+                      });
+                    },
                     items:
                         districts
                             .map(
@@ -67,7 +211,6 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
                   ),
                   SizedBox(height: 10),
 
-                  // City Dropdown
                   DropdownButtonFormField<String>(
                     dropdownColor: Colors.grey[700],
                     value: selectedCity,
@@ -91,7 +234,6 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
                   ),
                   SizedBox(height: 10),
 
-                  // Filter Button
                   ElevatedButton(
                     onPressed: () {},
                     child: Text("Filter"),
@@ -106,7 +248,6 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
 
             SizedBox(height: 10),
 
-            // Agri Waste Type Dropdown
             DropdownButtonFormField<String>(
               dropdownColor: Colors.grey[700],
               value: selectedWasteType,
@@ -128,10 +269,9 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
 
             SizedBox(height: 10),
 
-            // Waste Items List
             Expanded(
               child: ListView.builder(
-                itemCount: 3, // Change this based on data
+                itemCount: 3,
                 itemBuilder: (context, index) {
                   return Card(
                     color: Colors.grey[800],
