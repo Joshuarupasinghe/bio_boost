@@ -1,3 +1,5 @@
+import 'package:bio_boost/screens/home_company.dart';
+import 'package:bio_boost/screens/home_seller.dart';
 import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
@@ -24,7 +26,9 @@ class _HomePageState extends State<HomePage> {
       Center(
         child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
       ),
-      BenefitsPage(),
+      widget.userRole == 'Buyer'
+        ? CompanyHomePage()
+        :SellerHomePage(),
       ChatList(),
       widget.userRole == 'Buyer'
           ? CompanyProfilePage()
