@@ -120,9 +120,8 @@ class SellerProfilePage extends StatelessWidget {
               SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut(); // 👈 Sign out the user
+                  await FirebaseAuth.instance.signOut();
 
-                  // Navigate to Sign In page & remove all previous routes
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const SignInPage()),

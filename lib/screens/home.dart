@@ -1,3 +1,4 @@
+import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ final List<Widget> _screens = [
   Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
   BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
   ChatList(), // Chat screen
-  SellerProfilePage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
+  CompanyProfilePage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
 ];
 
   @override
