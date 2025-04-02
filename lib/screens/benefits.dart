@@ -7,6 +7,7 @@ class BenefitsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       backgroundColor: Colors.black, // Darker background for contrast
       body: ListView(
         padding: const EdgeInsets.all(10),
