@@ -112,7 +112,6 @@ class _CreateSales02State extends State<CreateSales02> {
     FirebaseFirestore.instance.collection('sales').add({
       'uid': uid,
       's_type': selectedCategory,
-      's_productName': _productNameController.text,
       's_price': _priceController.text,
       's_quantity': _quantityController.text,
       's_description': _descriptionController.text,
@@ -236,7 +235,6 @@ class _CreateSales02State extends State<CreateSales02> {
             _buildDetailField('Address', _addressController),
             _buildDetailField('Contact Number', _contactNumberController),
             _buildCategoryDropdown(),
-            _buildDetailField('Product Name', _productNameController),
             _buildDetailField('Price', _priceController),
             _buildDetailField('Quantity', _quantityController),
             _buildDetailField('Description', _descriptionController),
