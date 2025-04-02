@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'active_sales.dart';
 import 'MyProfileEdit.dart';
+import 'sign_In.dart';
 
 class SellerProfilePage extends StatelessWidget {
   @override
@@ -22,9 +24,9 @@ class SellerProfilePage extends StatelessWidget {
               Text(
                 "Sachintha",
                 style: TextStyle(
-                  fontWeight: FontWeight.bold, 
+                  fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: Colors.white
+                  color: Colors.white,
                 ),
               ),
               SizedBox(height: 15),
@@ -52,8 +54,8 @@ class SellerProfilePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Sachintha Gimhan", 
-                        style: TextStyle(fontSize: 20, color: Colors.white)
+                        "Sachintha Gimhan",
+                        style: TextStyle(fontSize: 20, color: Colors.white),
                       ),
                       SizedBox(height: 20),
                       Row(
@@ -61,8 +63,8 @@ class SellerProfilePage extends StatelessWidget {
                           Icon(Icons.location_pin, color: Colors.white),
                           SizedBox(width: 5),
                           Text(
-                            "Pitipana, Colombo", 
-                            style: TextStyle(fontSize: 20, color: Colors.white)
+                            "Pitipana, Colombo",
+                            style: TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
@@ -72,8 +74,8 @@ class SellerProfilePage extends StatelessWidget {
                           Icon(Icons.call, color: Colors.white),
                           SizedBox(width: 5),
                           Text(
-                            "077 xxxxxxx", 
-                            style: TextStyle(fontSize: 20, color: Colors.white)
+                            "077 xxxxxxx",
+                            style: TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
@@ -83,8 +85,8 @@ class SellerProfilePage extends StatelessWidget {
                           Icon(Icons.email, color: Colors.white),
                           SizedBox(width: 5),
                           Text(
-                            "sachintha123@gmail.com", 
-                            style: TextStyle(fontSize: 20, color: Colors.white)
+                            "sachintha123@gmail.com",
+                            style: TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
@@ -117,13 +119,17 @@ class SellerProfilePage extends StatelessWidget {
               ),
               SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {
-                  // Add logout functionality
-                  Navigator.pop(context);
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut(); // 👈 Sign out the user
+
+                  // Navigate to Sign In page & remove all previous routes
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SignInPage()),
+                    (route) => false, // Remove all routes
+                  );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
                 child: Text("Logout", style: TextStyle(color: Colors.white)),
               ),
             ],

@@ -1,8 +1,10 @@
+import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:flutter/material.dart';
-import 'chat_list.dart'; // Import the chat list screen
+import 'chat_list.dart'; 
 import 'benefits.dart';
-import 'become_seller.dart'; //Import the become seller page
+import 'MyProfileEdit.dart';
+import 'become_seller.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -21,7 +23,7 @@ final List<Widget> _screens = [
   Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
   BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
   ChatList(), // Chat screen
-  BecomeSellerPage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
+  SellerProfilePage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
 ];
 
   @override
