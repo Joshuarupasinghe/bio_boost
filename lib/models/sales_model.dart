@@ -79,7 +79,7 @@ class Sales {
       s_mainImage: s_mainImage,
       s_otherImages: s_otherImages,
       uid: uid,
-      s_status: s_status ?? this.s_status,
+      s_status: s_status ?? s_status,
     );
   }
 }
