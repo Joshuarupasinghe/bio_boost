@@ -1,14 +1,20 @@
+import 'package:bio_boost/services/chat_service.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String name;
   final String avatar;
+  final String userId; // Add this to store the user ID of the chat partner
 
   const ChatDetailScreen({
-    super.key,
+    Key? key,
     required this.name,
     required this.avatar,
-  });
+    required this.userId,
+  }) : super(key: key);
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
@@ -16,33 +22,46 @@ class ChatDetailScreen extends StatefulWidget {
 
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'text': 'Hello! I\'m interested in your agricultural waste products',
-      'isMe': false,
-      'time': '10:20 AM',
-    },
-    {
-      'text': 'Hi there! What type of waste are you looking for?',
-      'isMe': true,
-      'time': '10:22 AM',
-    },
-    {
-      'text': 'I need coconut husks and shells for my composting project',
-      'isMe': false,
-      'time': '10:25 AM',
-    },
-    {
-      'text': 'Great! I have about 500kg available. When do you need them?',
-      'isMe': true,
-      'time': '10:28 AM',
-    },
-    {
-      'text': 'Next week would be perfect. What\'s your price per kg?',
-      'isMe': false,
-      'time': '10:30 AM',
-    },
-  ];
+  final ChatService _chatService = ChatService();
+  late String _chatRoomId;
+  late Stream<QuerySnapshot> _messagesStream;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupChat();
+  }
+
+  Future<void> _setupChat() async {
+    // Create or get chat room
+    _chatRoomId = await _chatService.createChatRoom(widget.userId);
+    
+    // Get messages stream
+    _messagesStream = _chatService.getMessages(_chatRoomId);
+    
+    setState(() {
+      _isLoading = false;
+    });
+    
+    // Mark messages as read when opening the chat
+    _chatService.markMessagesAsRead(_chatRoomId, widget.userId);
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isNotEmpty) {
+      _chatService.sendMessage(
+        _chatRoomId,
+        widget.userId,
+        _messageController.text,
+      );
+      _messageController.clear();
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return DateFormat('h:mm a').format(dateTime);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,21 +100,53 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(10),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageItem(message);
-              },
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _messagesStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No messages yet. Start a conversation!',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      }
+
+                      final messages = snapshot.data!.docs;
+                      return ListView.builder(
+                        padding: EdgeInsets.all(10),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index].data() as Map<String, dynamic>;
+                          final isMe = message['senderId'] == _chatService.currentUserId;
+                          final time = DateTime.fromMillisecondsSinceEpoch(message['timestamp']);
+
+                          return _buildMessageItem({
+                            'text': message['text'],
+                            'isMe': isMe,
+                            'time': _formatTime(time),
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+                _buildMessageInput(),
+              ],
             ),
-          ),
-          _buildMessageInput(),
-        ],
-      ),
     );
   }
 
@@ -165,18 +216,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           IconButton(
             icon: Icon(Icons.send, color: Colors.teal),
-            onPressed: () {
-              if (_messageController.text.trim().isNotEmpty) {
-                setState(() {
-                  _messages.add({
-                    'text': _messageController.text,
-                    'isMe': true,
-                    'time': '${DateTime.now().hour}:${DateTime.now().minute}',
-                  });
-                  _messageController.clear();
-                });
-              }
-            },
+            onPressed: _sendMessage,
           ),
         ],
       ),
