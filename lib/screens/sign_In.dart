@@ -15,23 +15,21 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false; // For loading indicator
+Future<void> _signIn() async {
+  final email = emailController.text.trim();
+  final password = passwordController.text.trim();
 
-  Future<void> _signIn() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please enter email and password")),
+    );
+    return;
+  }
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
-      return;
-    }
+  setState(() => _isLoading = true);
 
-    setState(() => _isLoading = true);
-
+  try {
     final user = await AuthService().signIn(email, password);
-
-    setState(() => _isLoading = false);
 
     if (user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -43,10 +41,17 @@ class _SignInPageState extends State<SignInPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sign In Failed. Check credentials.")),
+        const SnackBar(content: Text("Invalid email or password.")),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: ${e.toString()}")),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {

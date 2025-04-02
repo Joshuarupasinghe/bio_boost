@@ -1,3 +1,4 @@
+import 'package:bio_boost/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,9 +45,31 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// 🔹 Automatically checks if the user is signed in
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  _AuthWrapperState createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  String? userRole; // Store role
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String? role = await AuthService().getUserRole(user.uid);
+      setState(() {
+        userRole = role;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,16 +78,17 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()), // Show loading
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (snapshot.hasData) {
-          return const HomePage(); // User is logged in
+          return HomePage(userRole: userRole); // Pass role to HomePage
         }
 
-        return const SignInPage(); // No user found, go to SignIn
+        return const SignInPage();
       },
     );
   }
 }
+
