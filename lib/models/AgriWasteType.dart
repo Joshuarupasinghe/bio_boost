@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AgriWasteTypePage extends StatefulWidget {
+  const AgriWasteTypePage({super.key});
+
   @override
   _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
 }
