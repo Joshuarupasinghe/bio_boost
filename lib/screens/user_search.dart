@@ -17,45 +17,56 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   final currentUserId = FirebaseAuth.instance.currentUser!.uid;
   List<DocumentSnapshot> _searchResults = [];
   bool _isLoading = false;
-  
+
   @override
   void initState() {
     super.initState();
     // Start with all users except the current user
     _performSearch('');
   }
-  
+
   Future<void> _performSearch(String searchText) async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       QuerySnapshot querySnapshot;
-      
+
       if (searchText.isEmpty) {
-        // Get all users except current user
-        querySnapshot = await _firestore
-            .collection('users')
-            .where('uid', isNotEqualTo: currentUserId)
-            .limit(20)
-            .get();
+        // Get all users
+        querySnapshot = await _firestore.collection('users').get();
+
+        // Filter current user out in memory
+        _searchResults =
+            querySnapshot.docs
+                .where(
+                  (doc) =>
+                      (doc.data() as Map<String, dynamic>)['uid'] !=
+                      currentUserId,
+                )
+                .toList();
       } else {
-        // Search for users by first name, last name, or company name
-        querySnapshot = await _firestore
-            .collection('users')
-            .where('uid', isNotEqualTo: currentUserId)
-            .where('firstName', isGreaterThanOrEqualTo: searchText)
-            .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff')
-            .limit(20)
-            .get();
-        
-        // Additional queries for last name and company name could be added here
-        // and results combined
+        // Search for users by first name
+        querySnapshot =
+            await _firestore
+                .collection('users')
+                .where('firstName', isGreaterThanOrEqualTo: searchText)
+                .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff')
+                .get();
+
+        // Filter current user out in memory
+        _searchResults =
+            querySnapshot.docs
+                .where(
+                  (doc) =>
+                      (doc.data() as Map<String, dynamic>)['uid'] !=
+                      currentUserId,
+                )
+                .toList();
       }
-      
+
       setState(() {
-        _searchResults = querySnapshot.docs;
         _isLoading = false;
       });
     } catch (error) {
@@ -65,7 +76,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,81 +109,87 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           ),
         ),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _searchResults.isEmpty
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : _searchResults.isEmpty
               ? Center(
-                  child: Text(
-                    'No users found',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    final userData = _searchResults[index].data() as Map<String, dynamic>;
-                    final userId = userData['uid'];
-                    final firstName = userData['firstName'] ?? '';
-                    final lastName = userData['lastName'] ?? '';
-                    final companyName = userData['companyName'] ?? '';
-                    final role = userData['role'] ?? 'seller';
-                    final initials = firstName.isNotEmpty && lastName.isNotEmpty
-                        ? firstName[0] + lastName[0]
-                        : '??';
-                    
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.teal,
-                        child: Text(
-                          initials,
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      title: Text(
-                        '$firstName $lastName',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            companyName,
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                          Text(
-                            role.toUpperCase(),
-                            style: TextStyle(
-                              color: role == 'buyer' ? Colors.blue : Colors.green,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      onTap: () async {
-                        final chatService = ChatService();
-                        final chatRoomId = await chatService.createChatRoom(userId);
-                        
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatDetailScreen(
-                              name: '$firstName $lastName',
-                              avatar: initials,
-                              userId: userId,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                child: Text(
+                  'No users found',
+                  style: TextStyle(color: Colors.white),
                 ),
+              )
+              : ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final userData =
+                      _searchResults[index].data() as Map<String, dynamic>;
+                  final userId = userData['uid'];
+                  final firstName = userData['firstName'] ?? '';
+                  final lastName = userData['lastName'] ?? '';
+                  final companyName = userData['companyName'] ?? '';
+                  final role = userData['role'] ?? 'seller';
+                  final initials =
+                      firstName.isNotEmpty && lastName.isNotEmpty
+                          ? firstName[0] + lastName[0]
+                          : '??';
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.teal,
+                      child: Text(
+                        initials,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    title: Text(
+                      '$firstName $lastName',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          companyName,
+                          style: TextStyle(color: Colors.grey[400]),
+                        ),
+                        Text(
+                          role.toUpperCase(),
+                          style: TextStyle(
+                            color: role == 'buyer' ? Colors.blue : Colors.green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final chatService = ChatService();
+                      final chatRoomId = await chatService.createChatRoom(
+                        userId,
+                      );
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ChatDetailScreen(
+                                name: '$firstName $lastName',
+                                avatar: initials,
+                                userId: userId,
+                              ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
     );
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
