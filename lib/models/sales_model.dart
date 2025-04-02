@@ -11,6 +11,7 @@ class Sales {
   final String s_mainImage;
   final List<String> s_otherImages;
   final String uid; // Added seller ID field
+  final String s_status;
 
   Sales({
     required this.documentId,
@@ -25,6 +26,7 @@ class Sales {
     required this.s_mainImage,
     required this.s_otherImages,
     required this.uid, // Added to constructor
+    required this.s_status,
   });
 
   factory Sales.fromMap(Map<String, dynamic> data, String documentId) {
@@ -40,7 +42,8 @@ class Sales {
       s_description: data['s_description'] ?? '',
       s_mainImage: data['s_mainImage'] ?? 'https://via.placeholder.com/250',
       s_otherImages: List<String>.from(data['s_otherImages'] ?? []),
-      uid: data['uid'], // Extract seller ID from data
+      uid: data['uid'],
+      s_status: data['s_status'] ?? 'Active',
     );
   }
 
@@ -58,6 +61,25 @@ class Sales {
       's_mainImage': s_mainImage,
       's_otherImages': s_otherImages,
       'uid': uid, // Include seller ID in the map
+      's_status': s_status,
     };
+  }
+
+  Sales copyWith({String? status}) {
+    return Sales(
+      documentId: documentId,
+      s_ownerName: s_ownerName,
+      s_location: s_location,
+      s_weight: s_weight,
+      s_type: s_type,
+      s_address: s_address,
+      s_contactNumber: s_contactNumber,
+      s_price: s_price,
+      s_description: s_description,
+      s_mainImage: s_mainImage,
+      s_otherImages: s_otherImages,
+      uid: uid,
+      s_status: s_status ?? this.s_status,
+    );
   }
 }
