@@ -1,12 +1,13 @@
+import 'package:bio_boost/screens/profile_company.dart';
+import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:flutter/material.dart';
-import 'chat_list.dart'; // Import the chat list screen
+import 'chat_list.dart';
 import 'benefits.dart';
-import 'become_seller.dart'; //Import the become seller page
-
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String? userRole;
+  const HomePage({super.key, required this.userRole});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -15,17 +16,21 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 2; // Start with Home selected
 
-// List of screens for each tab
-final List<Widget> _screens = [
-  WantedCompanyPage(),
-  Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
-  BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
-  ChatList(), // Chat screen
-  BecomeSellerPage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
-];
-
   @override
   Widget build(BuildContext context) {
+    // Assign profile page dynamically based on user role
+    List<Widget> screens = [
+      WantedCompanyPage(),
+      Center(
+        child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
+      ),
+      BenefitsPage(),
+      ChatList(),
+      widget.userRole == 'Buyer'
+          ? CompanyProfilePage()
+          : SellerProfilePage(), // Dynamic Profile Page
+    ];
+
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar:
@@ -76,20 +81,17 @@ final List<Widget> _screens = [
                           color: Colors.white,
                           size: 20,
                         ),
-                        padding: EdgeInsets.zero, // Remove default padding
+                        padding: EdgeInsets.zero,
                         onPressed: () {},
                       ),
                     ),
                   ],
                 ),
-                toolbarHeight:
-                    60, // Increase app bar height to accommodate larger logo
+                toolbarHeight: 60,
                 backgroundColor: Colors.grey[850],
                 elevation: 0,
               ),
-
-      body: _screens[_currentIndex],
-
+      body: screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.grey[850],
@@ -109,11 +111,7 @@ final List<Widget> _screens = [
             icon: Icon(Icons.question_answer),
             label: 'Chat',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _currentIndex,
         onTap: (index) {
