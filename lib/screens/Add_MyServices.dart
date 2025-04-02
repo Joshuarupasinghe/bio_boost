@@ -4,8 +4,6 @@ import '../services/service_request_service.dart';
 import '../services/wanted_sales_service.dart';
 
 class AddMyServicesPage extends StatefulWidget {
-  const AddMyServicesPage({super.key});
-
   @override
   _AddMyServicesPageState createState() => _AddMyServicesPageState();
 }

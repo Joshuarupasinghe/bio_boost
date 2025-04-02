@@ -1,6 +1,6 @@
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:flutter/material.dart';
-import 'package:bio_boost/screens/profile_company.dart'; // Import the company profile page
+import 'chat_list.dart'; // Import the chat list screen
 import 'benefits.dart';
 import 'become_seller.dart'; //Import the become seller page
 
@@ -20,7 +20,7 @@ final List<Widget> _screens = [
   WantedCompanyPage(),
   Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
   BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
-  CompanyProfilePage(), // Company Profile screen
+  ChatList(), // Chat screen
   BecomeSellerPage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
 ];
 

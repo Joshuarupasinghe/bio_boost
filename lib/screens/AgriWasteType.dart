@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AgriWasteTypePage extends StatefulWidget {
-  const AgriWasteTypePage({super.key});
-
   @override
   _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
 }
@@ -238,11 +236,11 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
 
                   ElevatedButton(
                     onPressed: () {},
+                    child: Text("Filter"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
                     ),
-                    child: Text("Filter"),
                   ),
                 ],
               ),

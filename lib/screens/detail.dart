@@ -224,11 +224,11 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _addToWishlist(agriWaste),
+                    child: const Text('Add To Wish List'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Add To Wish List'),
                   ),
                 ),
               ],

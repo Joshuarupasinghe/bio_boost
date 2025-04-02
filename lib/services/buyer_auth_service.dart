@@ -16,7 +16,7 @@ class BuyerAuthService {
       );
     } catch (e) {
       print('Error signing in: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -61,7 +61,7 @@ class BuyerAuthService {
       return buyer;
     } catch (e) {
       print('Error registering buyer: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -87,7 +87,7 @@ class BuyerAuthService {
       return existingSeller.docs.isNotEmpty;
     } catch (e) {
       print('Error checking user existence: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -110,7 +110,7 @@ class BuyerAuthService {
       return null;
     } catch (e) {
       print('Error getting buyer profile: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -120,7 +120,7 @@ class BuyerAuthService {
       await _auth.signOut();
     } catch (e) {
       print('Error signing out: $e');
-      rethrow;
+      throw e;
     }
   }
 
@@ -133,7 +133,7 @@ class BuyerAuthService {
           .update(data);
     } catch (e) {
       print('Error updating buyer profile: $e');
-      rethrow;
+      throw e;
     }
   }
 }
