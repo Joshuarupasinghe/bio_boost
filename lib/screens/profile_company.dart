@@ -213,7 +213,7 @@ class CompanyProfilePage extends StatelessWidget {
 class EditCompanyProfilePage extends StatelessWidget {
   final List<String> locations = ['Colombo', 'Pitipana'];
 
-  const EditCompanyProfilePage({super.key});
+  EditCompanyProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
