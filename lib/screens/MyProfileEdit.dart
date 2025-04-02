@@ -4,6 +4,8 @@ import 'dart:io';
 import '../services/seller_profile_service.dart';
 
 class MyProfileEdit extends StatefulWidget {
+  const MyProfileEdit({super.key});
+
   @override
   _MyProfileEditState createState() => _MyProfileEditState();
 }

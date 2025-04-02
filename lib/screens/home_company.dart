@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bio_boost/screens/AgriWasteType.dart';
 import 'package:flutter/material.dart';
 
 class CompanyHomePage extends StatefulWidget {
@@ -12,16 +13,28 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
   final List<String> imagePaths = ["images/add01.jpg", "images/add02.jpg"];
 
   final List<Map<String, String>> categories = [
-    {'title': 'Paddy Husk & Straw'},
-    {'title': 'Coconut Husks and Shells'},
-    {'title': 'Tea Waste'},
-    {'title': 'Rubber Wood and Latex Waste'},
-    {'title': 'Fruit and Vegetable Waste'},
-    {'title': 'Sugarcane Bagasse'},
-    {'title': 'Oil Cake and Residues'},
-    {'title': 'Maize and Other Cereal Residues'},
-    {'title': 'Banana Plant Waste'},
-    {'title': 'Other'},
+    {'title': 'Paddy Husk & Straw', 'url': 'images/Paddy Husk & Straw.jpg'},
+    {
+      'title': 'Coconut Husks & Shells',
+      'url': 'images/Coconut Husks & Shells.jpg',
+    },
+    {'title': 'Tea Waste', 'url': 'images/Tea Waste.jpg'},
+    {
+      'title': 'Rubber Wood & Latex Waste',
+      'url': 'images/Rubber Wood & Latex Waste.jpg',
+    },
+    {
+      'title': 'Fruit & Vegetable Waste',
+      'url': 'images/Fruit & Vegetable Waste.jpg',
+    },
+    {'title': 'Sugarcane Bagasse', 'url': 'images/Sugarcane Bagasse.jpg'},
+    {'title': 'Oil Cake & Residues', 'url': 'images/Oil Cake & Residues.jpeg'},
+    {
+      'title': 'Maize & Other Cereal Residues',
+      'url': 'images/Maize & Other Cereal Residues.jpg',
+    },
+    {'title': 'Banana Plant Waste', 'url': 'images/Banana Plant Waste.jpg'},
+    {'title': 'Other', 'url': 'images/others.jpeg'},
   ];
 
   late List<Widget> _pages;
@@ -146,9 +159,8 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                 ),
               ),
               GridView.builder(
-                shrinkWrap: true, // Make GridView take only the necessary space
-                physics:
-                    NeverScrollableScrollPhysics(), // Disable GridView scrolling
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 15,
@@ -157,38 +169,49 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                 ),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 80,
-                          color: Colors.white,
-                          child: const Center(
-                            child: Text(
-                              'Image Of the type of Agri waste',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 10),
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => AgriWasteTypePage(
+                                selectedCategory: categories[index]['title']!,
+                              ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            child: Center(
+                              child: Image.asset(
+                                categories[index]['url']!,
+                                height: 50,
+                                width: 80,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          categories[index]['title']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 3),
+                          Text(
+                            categories[index]['title']!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
