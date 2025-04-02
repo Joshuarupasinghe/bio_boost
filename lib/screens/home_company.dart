@@ -68,13 +68,87 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SizedBox(height: 20.0),
-            Expanded(
-              child: GridView.builder(// Disable scrolling
+      body: SingleChildScrollView(
+        // Wrap the entire body with SingleChildScrollView
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              SizedBox(height: 20.0),
+              Column(
+                children: [
+                  Stack(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 170.0,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: imagePaths.length,
+                          onPageChanged: (value) {
+                            setState(() {
+                              _activePage = value;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return _pages[index];
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 10,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List<Widget>.generate(
+                              _pages.length,
+                              (index) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    _pageController.animateToPage(
+                                      index,
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeIn,
+                                    );
+                                  },
+                                  child: CircleAvatar(
+                                    radius: 4,
+                                    backgroundColor:
+                                        _activePage == index
+                                            ? Colors.teal
+                                            : Colors.grey[850],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 2, // Thickness of the border
+                      color: Colors.grey[400], // Color of the border
+                    ),
+                  ],
+                ),
+              ),
+              GridView.builder(
+                shrinkWrap: true, // Make GridView take only the necessary space
+                physics:
+                    NeverScrollableScrollPhysics(), // Disable GridView scrolling
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 15,
@@ -119,76 +193,8 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                   );
                 },
               ),
-            ),
-            Column(
-              children: [
-                Container(
-                      height: 2, // Thickness of the border
-                      color: Colors.grey[400], // Color of the border
-                    ),
-              ],
-            ),
-            SizedBox(height: 20.0),
-            Column(
-              children: [
-                Stack(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 170.0,
-                      child: PageView.builder(
-                        controller: _pageController,
-                        itemCount: imagePaths.length,
-                        onPageChanged: (value) {
-                          setState(() {
-                            _activePage = value;
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          return _pages[index];
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 10,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        color: Colors.transparent,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List<Widget>.generate(
-                            _pages.length,
-                            (index) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2,
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  _pageController.animateToPage(
-                                    index,
-                                    duration: Duration(milliseconds: 300),
-                                    curve: Curves.easeIn,
-                                  );
-                                },
-                                child: CircleAvatar(
-                                  radius: 4,
-                                  backgroundColor:
-                                      _activePage == index
-                                          ? Colors.teal
-                                          : Colors.grey[850],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
