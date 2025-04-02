@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AgriWasteTypePage extends StatefulWidget {
   final String? selectedCategory;
 
-  const AgriWasteTypePage({Key? key, this.selectedCategory}) : super(key: key);
+  const AgriWasteTypePage({super.key, this.selectedCategory});
 
   @override
   _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
