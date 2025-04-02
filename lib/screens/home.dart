@@ -1,4 +1,3 @@
-import 'package:bio_boost/screens/active_sales.dart';
 import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
@@ -22,10 +21,9 @@ class _HomePageState extends State<HomePage> {
     // Assign profile page dynamically based on user role
     List<Widget> screens = [
       WantedCompanyPage(),
-      // Center(
-      //     child: Text('Wishlist Screen',
-      //         style: TextStyle(color: Colors.white))),
-      ActiveSales(),
+      Center(
+        child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
+      ),
       BenefitsPage(),
       ChatList(),
       widget.userRole == 'Buyer'
