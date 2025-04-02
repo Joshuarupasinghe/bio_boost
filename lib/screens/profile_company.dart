@@ -1,8 +1,12 @@
 import 'package:bio_boost/screens/become_seller.dart';
 import 'package:bio_boost/screens/wishlist.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'sign_in.dart';
+
 class CompanyProfilePage extends StatelessWidget {
+  const CompanyProfilePage({super.key}); // Add this line
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,12 +138,17 @@ class CompanyProfilePage extends StatelessWidget {
               ),
               SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {
-                  // Add logout functionality
-                  Navigator.pop(context); // Example logout action
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SignInPage()),
+                    (route) => false, // Remove all routes
+                  );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                child: Text("Logout"),
+                child: Text("Logout", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -211,6 +220,8 @@ class CompanyProfilePage extends StatelessWidget {
 
 class EditCompanyProfilePage extends StatelessWidget {
   final List<String> locations = ['Colombo', 'Pitipana'];
+
+  EditCompanyProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {

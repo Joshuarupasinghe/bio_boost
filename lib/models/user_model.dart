@@ -8,6 +8,7 @@ class UserModel {
   final String address;
   final String district;
   final String city;
+  final String role; // New field: 'buyer' or 'seller'
 
   UserModel({
     required this.uid,
@@ -19,9 +20,10 @@ class UserModel {
     required this.address,
     required this.district,
     required this.city,
+    required this.role,
   });
 
-// Convert UserModel to Map (for Firestore storing)
+  // Convert UserModel to Map (for Firestore storing)
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -33,10 +35,11 @@ class UserModel {
       'address': address,
       'district': district,
       'city': city,
+      'role': role,
     };
   }
 
-// Convert Map to UserModel (for Firestore retrieving)
+  // Convert Map to UserModel (for Firestore retrieving)
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'],
@@ -48,10 +51,11 @@ class UserModel {
       address: map['address'],
       district: map['district'],
       city: map['city'],
+      role: map['role'] ?? 'seller', // Default to 'seller' if not provided
     );
   }
-  
-// Create a new instance of UserModel with updated values  
+
+  // Create a new instance of UserModel with updated values
   UserModel copyWith({
     String? uid,
     String? firstName,
@@ -62,7 +66,8 @@ class UserModel {
     String? address,
     String? district,
     String? city,
-    }) {
+    String? role,
+  }) {
     return UserModel(
       uid: uid ?? this.uid,
       firstName: firstName ?? this.firstName,
@@ -73,6 +78,7 @@ class UserModel {
       address: address ?? this.address,
       district: district ?? this.district,
       city: city ?? this.city,
+      role: role ?? this.role,
     );
   }
 }
