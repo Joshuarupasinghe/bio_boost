@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class CreateSales02 extends StatefulWidget {
   final String selectedCategory;
@@ -23,7 +25,6 @@ class _CreateSales02State extends State<CreateSales02> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _contactNumberController = TextEditingController();
-  final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -48,13 +49,13 @@ class _CreateSales02State extends State<CreateSales02> {
   final ImagePicker _picker = ImagePicker();
 
   @override
-  void initState() {
-    super.initState();
-    uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+void initState() {
+  super.initState();
+  uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  selectedCategory = widget.selectedCategory;
+  _fetchUserData(); // Fetch user data
+}
 
-    // Set the selected category
-    selectedCategory = widget.selectedCategory;
-  }
 
   // Function to pick the main image
   Future<void> pickMainImage() async {
@@ -75,6 +76,23 @@ class _CreateSales02State extends State<CreateSales02> {
       });
     }
   }
+  Future<void> _fetchUserData() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users') // Ensure this matches your Firestore collection name
+        .doc(user.uid)
+        .get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data() as Map<String, dynamic>;
+      setState(() {
+        _locationController.text = "${userData['district']}, ${userData['city']}"; 
+      });
+    }
+  }
+}
+
 
   // Function to upload images to Firebase Storage and get URLs
   Future<String> uploadImageToFirebase(File image, String imageName) async {
