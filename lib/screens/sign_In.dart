@@ -32,13 +32,16 @@ Future<void> _signIn() async {
     final user = await AuthService().signIn(email, password);
 
     if (user != null) {
+      String? userRole = await AuthService().getUserRole(user['user'].uid);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Sign In Successful!")),
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(userRole: userRole ?? 'Buyer'), // Default to 'Buyer'
+      ),
+    );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid email or password.")),

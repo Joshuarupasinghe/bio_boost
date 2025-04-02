@@ -38,7 +38,10 @@ class MyApp extends StatelessWidget {
 
       // Named Routes
       routes: {
-        '/home': (context) => const HomePage(),
+        '/home': (context) {
+          final userRole = ModalRoute.of(context)!.settings.arguments as String?;
+          return HomePage(userRole: userRole ?? 'Buyer'); // Default role if null
+        },
         '/profile_company': (context) => const CompanyProfilePage(),
       },
     );
