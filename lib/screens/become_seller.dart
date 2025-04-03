@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/seller_auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BecomeSellerPage extends StatefulWidget {
@@ -13,63 +12,60 @@ class BecomeSellerPage extends StatefulWidget {
 class _BecomeSellerPageState extends State<BecomeSellerPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final SellerAuthService _sellerAuthService = SellerAuthService();
-  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  bool _isLoading = false;
+
+  String authStatus = "";
 
   Future<void> _registerSeller() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text.trim();
+    String confirmPassword = _confirmPasswordController.text.trim();
+    User? user = FirebaseAuth.instance.currentUser;
 
-      try {
-        // Get current user
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser == null) {
-          throw Exception('No authenticated user found');
-        }
+    if (username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('All fields are required!')));
+      return;
+    }
 
-        // Update user's role in Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .update({
-          'role': 'Seller',
-          'username': _usernameController.text.trim(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match!')));
+      return;
+    }
 
-        if (!mounted) return;
+    if (user == null) {
+      setState(() => authStatus = "❌ User not authenticated!");
+      return;
+    }
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully registered as a seller!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+    try {
+      // Update Firestore to add 'seller' role
+      DocumentReference userDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      await userDoc.update({
+        'roles': FieldValue.arrayUnion(['seller']), // Add 'seller' role
+        'username': username, // Set seller username
+      });
 
-        // Return success result
-        Navigator.pop(context, {
-          'success': true,
-          'role': 'Seller',
-        });
-      } catch (e) {
-        if (!mounted) return;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
+      setState(() => authStatus = "✅ You are now a seller!");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('You are now a seller!')));
+
+      await Future.delayed(const Duration(seconds: 2));
+      Navigator.pushReplacementNamed(context, '/profile_company');
+    } catch (e) {
+      setState(() => authStatus = "❌ Registration failed: ${e.toString()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration failed. Try again!')),
+      );
     }
   }
 
@@ -77,162 +73,135 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[850],
-        title: const Text('Become a Seller'),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              const Text(
-                "Create a Seller Account",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+      appBar: AppBar(backgroundColor: Colors.grey[850]),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                const Text(
+                  "Become a Seller",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Enter your details to become a seller",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
+                const SizedBox(height: 10),
+                const Text(
+                  "Create a new username to become a seller",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 30),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[850],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Form(
-                  key: _formKey,
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 30,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(
-                        controller: _usernameController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.grey[800],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.person_outline,
-                            color: Colors.white70,
-                          ),
-                        ),
+                      const SizedBox(height: 20),
+                      _buildTextField("Username", _usernameController),
+                      const SizedBox(height: 15),
+                      _buildPasswordField(
+                        "Password",
+                        _passwordController,
+                        _isPasswordVisible,
+                        (value) {
+                          setState(() => _isPasswordVisible = value);
+                        },
                       ),
                       const SizedBox(height: 15),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: !_isPasswordVisible,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.grey[800],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.white70,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.white70,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      TextField(
-                        controller: _confirmPasswordController,
-                        obscureText: !_isConfirmPasswordVisible,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Confirm Password',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.grey[800],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.white70,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.white70,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                              });
-                            },
-                          ),
-                        ),
+                      _buildPasswordField(
+                        "Confirm Password",
+                        _confirmPasswordController,
+                        _isConfirmPasswordVisible,
+                        (value) {
+                          setState(() => _isConfirmPasswordVisible = value);
+                        },
                       ),
                       const SizedBox(height: 30),
                       SizedBox(
                         width: double.infinity,
-                        height: 50,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _registerSeller,
+                          onPressed: _registerSeller,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.teal,
+                            padding: const EdgeInsets.all(15),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Become a Seller',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                          child: const Text(
+                            "Become a Seller",
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      if (authStatus.isNotEmpty)
+                        Text(
+                          authStatus,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController controller,
+    bool isPasswordVisible,
+    Function(bool) onVisibilityChanged,
+  ) {
+    return TextField(
+      controller: controller,
+      obscureText: !isPasswordVisible,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[800],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        suffixIcon: IconButton(
+          icon: Icon(
+            isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+            color: Colors.white,
+          ),
+          onPressed: () => onVisibilityChanged(!isPasswordVisible),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[800],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
