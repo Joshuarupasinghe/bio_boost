@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../services/seller_profile_service.dart';
 
 class MyProfileEdit extends StatefulWidget {
+  const MyProfileEdit({super.key});
+
   @override
   _MyProfileEditState createState() => _MyProfileEditState();
 }
@@ -10,22 +13,52 @@ class MyProfileEdit extends StatefulWidget {
 class _MyProfileEditState extends State<MyProfileEdit> {
   File? _profileImage;
   final picker = ImagePicker();
+  // Initialize the seller profile service
+  final SellerProfileService _profileService = SellerProfileService();
+  bool _isLoading = true;
 
   // Controllers for text fields
-  TextEditingController firstNameController = TextEditingController(
-    text: "Nimal",
-  );
-  TextEditingController lastNameController = TextEditingController(
-    text: "Gunawardhana",
-  );
-  TextEditingController contactController = TextEditingController(
-    text: "077 xxxxxxx",
-  );
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController contactController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
   // Dropdown values
   String selectedDistrict = "Colombo";
   String selectedCity = "Nugegoda";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final profileData = await _profileService.getSellerProfile();
+      
+      if (profileData != null) {
+        setState(() {
+          firstNameController.text = profileData['firstName'] ?? '';
+          lastNameController.text = profileData['lastName'] ?? '';
+          contactController.text = profileData['contact'] ?? '';
+          emailController.text = profileData['email'] ?? '';
+          selectedDistrict = profileData['district'] ?? 'Colombo';
+          selectedCity = profileData['city'] ?? 'Nugegoda';
+        });
+      }
+    } catch (e) {
+      print("Error loading profile data: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   final List<String> districts = [
     "Colombo",
@@ -206,132 +239,136 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Profile Picture
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[700],
-                    backgroundImage:
-                        _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : null,
-                    child:
-                        _profileImage == null
-                            ? Icon(Icons.person, color: Colors.white, size: 50)
-                            : null,
+      appBar: AppBar(
+        title: Text("Edit Profile"),
+        backgroundColor: Colors.grey[850],
+      ),
+      body: _isLoading 
+        ? Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Profile Picture
+                Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[700],
+                        backgroundImage:
+                            _profileImage != null
+                                ? FileImage(_profileImage!)
+                                : null,
+                        child:
+                            _profileImage == null
+                                ? Icon(Icons.person, color: Colors.white, size: 50)
+                                : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: InkWell(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.black,
+                            child: Icon(Icons.camera_alt, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: InkWell(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.black,
-                        child: Icon(Icons.camera_alt, color: Colors.white),
+                ),
+  
+                SizedBox(height: 10),
+  
+                // Username Placeholder
+                Text(
+                  "UserName",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+  
+                SizedBox(height: 20),
+  
+                // Name Fields
+                _buildSectionTitle("Name"),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(firstNameController, "First Name"),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(lastNameController, "Last Name"),
+                    ),
+                  ],
+                ),
+  
+                SizedBox(height: 15),
+  
+                // Location Fields
+                _buildSectionTitle("Location"),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdown(
+                        "District",
+                        districts,
+                        selectedDistrict,
+                        (newValue) {
+                          setState(() {
+                            selectedDistrict = newValue!;
+                          });
+                        },
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            // Username Placeholder
-            Text(
-              "UserName",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            // Name Fields
-            _buildSectionTitle("Name"),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(firstNameController, "First Name"),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: _buildDropdown("City", cities, selectedCity, (
+                        newValue,
+                      ) {
+                        setState(() {
+                          selectedCity = newValue!;
+                        });
+                      }),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildTextField(lastNameController, "Last Name"),
+  
+                SizedBox(height: 15),
+  
+                // Contact Number
+                _buildSectionTitle("Contact Number"),
+                _buildTextField(contactController, "077 xxxxxxx"),
+  
+                SizedBox(height: 15),
+  
+                // Optional Email
+                _buildSectionTitle("Add New Email (Optional)"),
+                _buildTextField(emailController, "Enter your email"),
+  
+                SizedBox(height: 20),
+  
+                // Update Button
+                ElevatedButton(
+                  onPressed: _updateProfile,  // Change this line to call your method
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                  child: Text("Update"),
                 ),
               ],
             ),
-
-            SizedBox(height: 15),
-
-            // Location Fields
-            _buildSectionTitle("Location"),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDropdown(
-                    "District",
-                    districts,
-                    selectedDistrict,
-                    (newValue) {
-                      setState(() {
-                        selectedDistrict = newValue!;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildDropdown("City", cities, selectedCity, (
-                    newValue,
-                  ) {
-                    setState(() {
-                      selectedCity = newValue!;
-                    });
-                  }),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 15),
-
-            // Contact Number
-            _buildSectionTitle("Contact Number"),
-            _buildTextField(contactController, "077 xxxxxxx"),
-
-            SizedBox(height: 15),
-
-            // Optional Email
-            _buildSectionTitle("Add New Email (Optional)"),
-            _buildTextField(emailController, "Enter your email"),
-
-            SizedBox(height: 20),
-
-            // Update Button
-            ElevatedButton(
-              onPressed: () {
-                // Save Profile Logic
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: Text("Update"),
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
 
   // Widget for text fields
@@ -387,5 +424,28 @@ class _MyProfileEditState extends State<MyProfileEdit> {
         ),
       ),
     );
+  }
+
+  Future<void> _updateProfile() async {
+    final success = await _profileService.updateSellerProfile(
+      firstName: firstNameController.text,
+      lastName: lastNameController.text,
+      contact: contactController.text,
+      email: emailController.text,
+      district: selectedDistrict,
+      city: selectedCity,
+      profileImage: _profileImage,
+    );
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile updated successfully'))
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile'))
+      );
+    }
   }
 }
