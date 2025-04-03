@@ -8,7 +8,7 @@ class UserModel {
   final String address;
   final String district;
   final String city;
-  final String role; // 'buyer' or 'seller'
+  final List<String> roles; // Now supports multiple roles (buyer & seller)
 
   UserModel({
     required this.uid,
@@ -20,7 +20,7 @@ class UserModel {
     required this.address,
     required this.district,
     required this.city,
-    required this.role,
+    required this.roles,
   });
 
   // Convert UserModel to Map (for Firestore storing)
@@ -35,7 +35,7 @@ class UserModel {
       'address': address,
       'district': district,
       'city': city,
-      'role': role,
+      'roles': roles, // List of roles
     };
   }
 
@@ -44,15 +44,15 @@ class UserModel {
     // Safely extract values with fallback defaults
     return UserModel(
       uid: map['uid'] ?? '',
-      firstName: map['firstName'] ?? 'Default',
-      lastName: map['lastName'] ?? 'User',
-      email: map['email'] ?? 'default@example.com',
-      companyName: map['companyName'] ?? 'Default Company',
-      phone: map['phone'] ?? '1234567890',
-      address: map['address'] ?? 'Default Address',
-      district: map['district'] ?? 'Default District',
-      city: map['city'] ?? 'Default City',
-      role: map['role'] ?? 'buyer', // Default to 'buyer' if not provided
+      firstName: map['firstName'] ?? '',
+      lastName: map['lastName'] ?? '',
+      email: map['email'] ?? '',
+      companyName: map['companyName'] ?? '',
+      phone: map['phone'] ?? '',
+      address: map['address'] ?? '',
+      district: map['district'] ?? '',
+      city: map['city'] ?? '',
+      roles: List<String>.from(map['roles'] ?? ['buyer']), // Default role is 'buyer'
     );
   }
 
@@ -67,7 +67,7 @@ class UserModel {
     String? address,
     String? district,
     String? city,
-    String? role,
+    List<String>? roles,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -79,7 +79,15 @@ class UserModel {
       address: address ?? this.address,
       district: district ?? this.district,
       city: city ?? this.city,
-      role: role ?? this.role,
+      roles: roles ?? this.roles,
     );
+  }
+
+  // Method to add a new role
+  UserModel addRole(String newRole) {
+    if (!roles.contains(newRole)) {
+      return copyWith(roles: [...roles, newRole]);
+    }
+    return this;
   }
 }
