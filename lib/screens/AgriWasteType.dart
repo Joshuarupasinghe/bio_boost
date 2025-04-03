@@ -7,18 +7,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SalesListScreen extends StatefulWidget {
   const SalesListScreen({super.key});
 
+
   @override
   _SalesListScreenState createState() => _SalesListScreenState();
 }
+
 
 class _SalesListScreenState extends State<SalesListScreen> {
   late Future<List<Sales>> _salesFuture;
   final SalesService _salesService = SalesService();
   String? _currentUserId;
 
+
   @override
   void initState() {
     super.initState();
+
     _loadCurrentUser();
     _salesFuture = _salesService.getSalesDetails();
   }
@@ -27,12 +31,20 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _currentUserId = prefs.getString('currentUserId') ?? 'defaultUser';
+
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentUser == null) {
+      return Scaffold(
+        body: Center(child: Text("Please sign in to view the listings.")),
+      );
+    }
+
     return Scaffold(
+
       appBar: AppBar(title: const Text('Agricultural Waste Sales')),
       body: FutureBuilder<List<Sales>>(
         future: _salesFuture,
@@ -68,6 +80,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                         ),
                       );
                     }
+
                   },
                 ),
               );

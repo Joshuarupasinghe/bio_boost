@@ -3,8 +3,10 @@ import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/data/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
+
   final String saleId;
   final String currentUserId;
 
@@ -12,6 +14,7 @@ class AgriWasteDetailPage extends StatefulWidget {
     super.key,
     required this.saleId,
     required this.currentUserId,
+
   });
 
   @override
@@ -56,6 +59,14 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
     }
   }
 
+  // Contact button action
+  void _contactSeller(Sales agriWaste) {
+    // Pass both currentUser and agriWaste details to whatever contact functionality you want
+    print(
+      "Contacting seller ${agriWaste.s_ownerName} for ${agriWaste.s_type}.",
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,9 +90,129 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
               children: [
                 _buildImageSection(agriWaste),
                 const SizedBox(height: 10),
+
+
+                // Secondary images row
+                SizedBox(
+                  height: 80,
+                  child: Row(
+                    children: [
+                      // Main image thumbnail
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedImageIndex = -1;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color:
+                                    _selectedImageIndex == -1
+                                        ? Colors.blue
+                                        : Colors.grey,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: Image.network(
+                                agriWaste.s_mainImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(Icons.image_not_supported),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Other images (up to 4 thumbnails)
+                      ...List.generate(
+                        agriWaste.s_otherImages.length > 4
+                            ? 4
+                            : agriWaste.s_otherImages.length,
+                        (index) => Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedImageIndex = index;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color:
+                                      _selectedImageIndex == index
+                                          ? Colors.blue
+                                          : Colors.grey,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(3),
+                                child: Image.network(
+                                  agriWaste.s_otherImages[index],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(Icons.image_not_supported),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 10),
+
                 _buildDetailFields(agriWaste),
                 const SizedBox(height: 16),
+
                 _buildButtons(agriWaste),
+
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _contactSeller(agriWaste),
+                    icon: const Icon(Icons.phone),
+                    label: const Text('Contact'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.teal,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _addToWishlist(agriWaste),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Add To Wish List'),
+                  ),
+                ),
               ],
             ),
           );
