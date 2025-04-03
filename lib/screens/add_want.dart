@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/company_profile_service.dart';
 
 class AddWantScreen extends StatefulWidget {
-  const AddWantScreen({Key? key}) : super(key: key);
+  const AddWantScreen({super.key});
 
   @override
   State<AddWantScreen> createState() => _AddWantScreenState();
