@@ -5,6 +5,7 @@ import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:bio_boost/screens/create_sales01.dart';
 import 'package:bio_boost/screens/create_sales02.dart';
+import 'package:bio_boost/screens/wishlist.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import 'chat_list.dart';
@@ -28,9 +29,7 @@ class _HomePageState extends State<HomePage> {
     // Assign profile page dynamically based on user role
     List<Widget> screens = [
       WantedCompanyPage(),
-      Center(
-        child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
-      ),
+      WishlistPage(),
       widget.userRole == 'Buyer'
         ? CompanyHomePage()
         :SellerHomePage(),
