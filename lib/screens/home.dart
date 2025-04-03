@@ -1,6 +1,8 @@
 import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
+import 'package:bio_boost/screens/create_sales01.dart';
+import 'package:bio_boost/screens/create_sales02.dart';
 import 'package:flutter/material.dart';
 import 'chat_list.dart';
 import 'benefits.dart';
@@ -26,6 +28,7 @@ class _HomePageState extends State<HomePage> {
       ),
       BenefitsPage(),
       ChatList(),
+      CreateSales01(),
       widget.userRole == 'Buyer'
           ? CompanyProfilePage()
           : SellerProfilePage(), // Dynamic Profile Page

@@ -19,7 +19,6 @@ class _ActiveSalesState extends State<ActiveSales> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _currentUserId;
-  String? _userRole;
 
   @override
   void initState() {
@@ -33,7 +32,6 @@ class _ActiveSalesState extends State<ActiveSales> {
       String? role = await _authService.getUserRole(user.uid);
       setState(() {
         _currentUserId = user.uid;
-        _userRole = role;
       });
       if (role == 'Seller') {
         _fetchSellerSales();
@@ -54,10 +52,6 @@ class _ActiveSalesState extends State<ActiveSales> {
   Future<void> _fetchSellerSales() async {
     if (_currentUserId == null) return;
     try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
       final salesList = await _salesService.getSellerSales(_currentUserId!);
       setState(() {
         _activeSales = salesList;
@@ -71,29 +65,31 @@ class _ActiveSalesState extends State<ActiveSales> {
     }
   }
 
+  Future<void> _deleteSale(String documentId) async {
+    bool success = await _salesService.deleteSale(documentId);
+    if (success) {
+      setState(() {
+        _activeSales.removeWhere((sale) => sale.documentId == documentId);
+      });
+    }
+  }
+
+  void _changeSaleStatus(String documentId, String newStatus) async {
+    bool success = await _salesService.updateSale(documentId, {
+      's_status': newStatus,
+    });
+    if (success) {
+      _fetchSellerSales();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: const Text(
-          'My Active Sales',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('My Active Sales'),
         backgroundColor: Colors.grey[850],
-        actions:
-            _userRole == 'Seller'
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: () => _navigateToAddSale(context),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _fetchSellerSales,
-                  ),
-                ]
-                : null,
       ),
       body:
           _isLoading
@@ -103,122 +99,98 @@ class _ActiveSalesState extends State<ActiveSales> {
                 child: Text(
                   _errorMessage!,
                   style: const TextStyle(color: Colors.white70),
-                  textAlign: TextAlign.center,
                 ),
               )
               : _activeSales.isEmpty
               ? const Center(
                 child: Text(
                   'You have no active sales',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: Colors.white70),
                 ),
               )
-              : RefreshIndicator(
-                onRefresh: _fetchSellerSales,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _activeSales.length,
-                  itemBuilder: (context, index) {
-                    final sale = _activeSales[index];
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      color: Colors.grey[850],
-                      child: ListTile(
-                        leading:
-                            sale.s_mainImage.startsWith('http')
-                                ? Image.network(
-                                  sale.s_mainImage,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                )
-                                : Image.asset(
-                                  'images/bioWasteMain.jpg',
-                                  width: 80,
-                                  height: 80,
-                                ),
-                        title: Text(
-                          'Type: ${sale.s_type}',
-                          style: const TextStyle(
-                            color: Colors.tealAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Location: ${sale.s_location}',
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                            Text(
-                              'Weight: ${sale.s_weight}',
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                            Text(
-                              'Price: ${sale.s_price}',
-                              style: const TextStyle(
-                                color: Colors.greenAccent,
-                                fontWeight: FontWeight.bold,
+              : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _activeSales.length,
+                itemBuilder: (context, index) {
+                  final sale = _activeSales[index];
+                  return Card(
+                    color: Colors.grey[850],
+                    child: ListTile(
+                      leading:
+                          sale.s_mainImage.startsWith('http')
+                              ? Image.network(
+                                sale.s_mainImage,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                              : Image.asset(
+                                'images/bioWasteMain.jpg',
+                                width: 80,
+                                height: 80,
                               ),
-                            ),
-                            Text(
-                              'Status: Active',
-                              style: TextStyle(color: Colors.green[300]),
-                            ),
-                          ],
+                      title: Text(
+                        'Type: ${sale.s_type}',
+                        style: TextStyle(
+                          color: Colors.white, // Darker teal
+                          fontWeight: FontWeight.bold,
                         ),
-                        trailing:
-                            _userRole == 'Seller'
-                                ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.blueAccent,
-                                      ),
-                                      onPressed:
-                                          () => _navigateToEditSale(
-                                            context,
-                                            sale,
-                                          ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.redAccent,
-                                      ),
-                                      onPressed:
-                                          () => _showDeleteConfirmation(
-                                            context,
-                                            sale,
-                                          ),
-                                    ),
-                                  ],
-                                )
-                                : null,
                       ),
-                    );
-                  },
-                ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Location: ${sale.s_location}',
+                            style: const TextStyle(color: Colors.teal),
+                          ),
+                          Text(
+                            'Weight: ${sale.s_weight}',
+                            style: const TextStyle(color: Colors.teal),
+                          ),
+                          Text(
+                            'Price: ${sale.s_price}',
+                            style: const TextStyle(color: Colors.teal),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Status: ${sale.s_status}',
+                                style: TextStyle(
+                                  color:
+                                      sale.s_status == 'Active'
+                                          ? Colors.green
+                                          : Colors.red,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  sale.s_status == 'Active'
+                                      ? Icons.toggle_on
+                                      : Icons.toggle_off,
+                                  color: Colors.amberAccent,
+                                  size: 30,
+                                ),
+                                onPressed:
+                                    () => _changeSaleStatus(
+                                      sale.documentId,
+                                      sale.s_status == 'Active'
+                                          ? 'Inactive'
+                                          : 'Active',
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () => _deleteSale(sale.documentId),
+                      ),
+                    ),
+                  );
+                },
               ),
     );
-  }
-
-  void _navigateToAddSale(BuildContext context) {
-    // TODO: Implement navigation to add sale page
-  }
-
-  void _navigateToEditSale(BuildContext context, Sales sale) {
-    // TODO: Implement navigation to edit sale page
-  }
-
-  void _showDeleteConfirmation(BuildContext context, Sales sale) {
-    // TODO: Implement delete confirmation
   }
 }

@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_detail.dart';
 
 class UserSearchScreen extends StatefulWidget {
-  const UserSearchScreen({Key? key}) : super(key: key);
+  const UserSearchScreen({super.key});
 
   @override
   _UserSearchScreenState createState() => _UserSearchScreenState();
@@ -52,7 +52,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             await _firestore
                 .collection('users')
                 .where('firstName', isGreaterThanOrEqualTo: searchText)
-                .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff')
+                .where('firstName', isLessThanOrEqualTo: '$searchText\uf8ff')
                 .get();
 
         // Filter current user out in memory

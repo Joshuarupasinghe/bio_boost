@@ -10,11 +10,11 @@ class ChatDetailScreen extends StatefulWidget {
   final String userId; // Add this to store the user ID of the chat partner
 
   const ChatDetailScreen({
-    Key? key,
+    super.key,
     required this.name,
     required this.avatar,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
