@@ -41,6 +41,7 @@ class UserModel {
 
   // Convert Map to UserModel (for Firestore retrieving)
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    // Safely extract values with fallback defaults
     return UserModel(
       uid: map['uid'] ?? '',
       firstName: map['firstName'] ?? '',
