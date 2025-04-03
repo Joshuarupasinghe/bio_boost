@@ -1,30 +1,7 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'sign_up.dart';
+import '../services/auth_service.dart';
 import 'home.dart';
-import 'package:flutter/foundation.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: FirebaseOptions(
-        apiKey: "AIzaSyCUR91Hf7nFo6TmeelXdMZNMnC4I9nehDo",
-        authDomain: "bio-boost-lk.firebaseapp.com",
-        projectId: "bio-boost-lk",
-        storageBucket: "bio-boost-lk.firebasestorage.app",
-        messagingSenderId: "650586806039",
-        appId: "1:650586806039:web:7578fbb850ee041e980952",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
-
-  runApp(const SignInPage());
-}
+import 'sign_up.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -37,27 +14,47 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false; // For loading indicator
+Future<void> _signIn() async {
+  final email = emailController.text.trim();
+  final password = passwordController.text.trim();
 
-  Future<void> _signIn() async {
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please enter email and password")),
+    );
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final user = await AuthService().signIn(email, password);
+
+    if (user != null) {
+      String? userRole = await AuthService().getUserRole(user['user'].uid);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Sign In Successful!")),
       );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
-    } catch (e) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(userRole: userRole ?? 'Buyer'), // Default to 'Buyer'
+      ),
+    );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
+        const SnackBar(content: Text("Invalid email or password.")),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: ${e.toString()}")),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +66,6 @@ class _SignInPageState extends State<SignInPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            
               SizedBox(
                 height: 120,
                 child: Image.asset(
@@ -79,13 +75,12 @@ class _SignInPageState extends State<SignInPage> {
               ),
               const SizedBox(height: 20),
 
-             
               buildTextField("Email", Icons.email, emailController, false),
               const SizedBox(height: 15),
               buildPasswordField(),
               const SizedBox(height: 20),
 
-              
+              // Sign In Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -97,20 +92,21 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                     elevation: 3,
                   ),
-                  onPressed: _signIn,
-                  child: const Text(
-                    "Sign In",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  onPressed: _isLoading ? null : _signIn, // Disable when loading
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "Sign In",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 15),
 
-              
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -134,7 +130,8 @@ class _SignInPageState extends State<SignInPage> {
     );
   }
 
-  Widget buildTextField(String hintText, IconData icon, TextEditingController controller, bool isPassword) {
+  Widget buildTextField(
+      String hintText, IconData icon, TextEditingController controller, bool isPassword) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
