@@ -38,8 +38,10 @@ class _WantedCompanyPageState extends State<WantedCompanyPage> {
   @override
   void initState() {
     super.initState();
-    _fetchServiceRequests();
     _checkUserRole();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchServiceRequests();
+    });
   }
 
   Future<void> _checkUserRole() async {
@@ -152,15 +154,20 @@ class _WantedCompanyPageState extends State<WantedCompanyPage> {
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AddMyServicesPage()),
           );
+
+          if (result == true) {
+            _fetchServiceRequests(); // Refresh the list after adding a service
+          }
         },
         backgroundColor: Colors.teal,
         child: Icon(Icons.add, color: Colors.white, size: 30),
       ),
+
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())

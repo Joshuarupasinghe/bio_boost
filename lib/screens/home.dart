@@ -1,13 +1,15 @@
-import 'package:bio_boost/screens/AgriWasteType.dart';
 import 'package:bio_boost/screens/home_company.dart';
 import 'package:bio_boost/screens/home_seller.dart';
 import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
 import 'package:bio_boost/screens/create_sales01.dart';
+import 'package:bio_boost/screens/create_sales02.dart';
+import 'package:bio_boost/screens/wishlist.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import 'chat_list.dart';
+import 'benefits.dart';
 
 class HomePage extends StatefulWidget {
   final String? userRole;
@@ -21,18 +23,18 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 2; // Start with Home selected
   int _unreadChatCount = 0;
 
+
   @override
   Widget build(BuildContext context) {
     // Assign profile page dynamically based on user role
     List<Widget> screens = [
       WantedCompanyPage(),
-      Center(
-        child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
-      ),
-      // widget.userRole == 'Buyer' ? CompanyHomePage() : SellerHomePage(),
-      // ChatList(),
-      AgriWasteTypePage(),
-      CreateSales01(),
+      WishlistPage(),
+      widget.userRole == 'Buyer'
+        ? CompanyHomePage()
+        :SellerHomePage(),
+      ChatList(),
+      //CreateSales01(),
       widget.userRole == 'Buyer'
           ? CompanyProfilePage()
           : SellerProfilePage(), // Dynamic Profile Page
@@ -92,6 +94,32 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () {},
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.info, color: Colors.white),
+                      label: Text(
+                        'Benefits',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BenefitsPage(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 toolbarHeight: 60,
@@ -100,74 +128,72 @@ class _HomePageState extends State<HomePage> {
               ),
       body: screens[_currentIndex],
       bottomNavigationBar: StreamBuilder<int>(
-        stream: ChatService().getUnreadChatCount(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            _unreadChatCount = snapshot.data!;
-          }
+  stream: ChatService().getUnreadChatCount(),
+  builder: (context, snapshot) {
+    if (snapshot.hasData) {
+      _unreadChatCount = snapshot.data!;
+    }
 
-          return BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.grey[850],
-            selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.grey[500],
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.fact_check),
-                label: 'Wanted',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.list_alt),
-                label: 'Wishlist',
-              ),
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(
-                icon: Stack(
-                  children: [
-                    Icon(Icons.question_answer),
-                    if (_unreadChatCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '$_unreadChatCount',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.grey[850],
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.grey[500],
+      items: [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.fact_check),
+          label: 'Wanted',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.list_alt),
+          label: 'Wishlist',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Stack(
+            children: [
+              Icon(Icons.question_answer),
+              if (_unreadChatCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unreadChatCount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
                       ),
-                  ],
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-                label: 'Chat',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
-              ),
             ],
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-          );
-        },
-      ),
+          ),
+          label: 'Chat',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+    );
+  },
+),
+
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/seller_auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BecomeSellerPage extends StatefulWidget {
   const BecomeSellerPage({super.key});
@@ -14,16 +14,39 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final SellerAuthService _sellerAuthService = SellerAuthService();
+
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-
-  // Track the status messages
+  bool isLoading = false;
   String authStatus = "";
-  String sellerDataStatus = "";
+  bool isAlreadySeller = false;
 
-  /// **Register Seller**
-  void _registerSeller() async {
+  @override
+  void initState() {
+    super.initState();
+    _checkIfAlreadySeller();
+  }
+
+  Future<void> _checkIfAlreadySeller() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      var sellerDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+
+      if (sellerDoc.exists &&
+          sellerDoc.data()?['roles']?.contains('seller') == true) {
+        setState(() {
+          isAlreadySeller = true;
+          authStatus = "✅ You are already a registered seller!";
+        });
+      }
+    }
+  }
+
+  Future<void> _registerSeller() async {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
     String confirmPassword = _confirmPasswordController.text.trim();
@@ -42,32 +65,64 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
       return;
     }
 
-    // Show initial message
-    setState(() {
-      authStatus = "Attempting sign-up for: $username";
-    });
+    setState(() => isLoading = true);
 
-    await Future.delayed(Duration(milliseconds: 500)); // Allow UI update
+    try {
+      // Check if the username already exists as a seller
+      var existingUser =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .where('roles', arrayContains: 'seller')
+              .get();
 
-    // Expecting a `User?` instead of a `String?`
-    User? user = await _sellerAuthService.signUpSeller(username, password);
+      if (existingUser.docs.isNotEmpty) {
+        setState(() {
+          authStatus = "❌ You are already registered as a seller!";
+          isAlreadySeller = true;
+        });
+        return;
+      }
 
-    if (user != null) {
-      // Show success message and delay before navigation
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seller registered successfully!')),
-      );
+      // Register new seller in Firebase Authentication
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: "$username@sellers.com", // Fake email for authentication
+            password: password,
+          );
 
-      await Future.delayed(Duration(seconds: 2)); // Delay before navigating
-      Navigator.pushReplacementNamed(context, '/profile_company');
-    } else {
-      // If sign-up fails, update status
-      setState(() {
-        authStatus = "❌ Registration failed. Try again!";
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration failed. Try again!')),
-      );
+      User? user = userCredential.user;
+      if (user != null) {
+        // Store seller details in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'username': username,
+          'roles': ['seller'],
+          'email': user.email,
+          'createdAt': Timestamp.now(),
+        });
+
+        setState(() {
+          authStatus = "✅ Registration successful! Redirecting to Home...";
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully registered! Redirecting...'),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Navigate to homepage
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      setState(() => authStatus = "❌ Registration failed: ${e.toString()}");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -78,7 +133,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
       appBar: AppBar(backgroundColor: Colors.grey[850]),
       body: Center(
         child: SingleChildScrollView(
-          // Wrapped in SingleChildScrollView
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -98,8 +152,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
-
-                // Box containing the form
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -112,65 +164,73 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
-                      _buildTextField("Username", _usernameController),
-                      const SizedBox(height: 15),
-                      _buildPasswordField(
-                        "Password",
-                        _passwordController,
-                        _isPasswordVisible,
-                        (value) {
-                          setState(() {
-                            _isPasswordVisible = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 15),
-                      _buildPasswordField(
-                        "Confirm Password",
-                        _confirmPasswordController,
-                        _isConfirmPasswordVisible,
-                        (value) {
-                          setState(() {
-                            _isConfirmPasswordVisible = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 30),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _registerSeller,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            padding: const EdgeInsets.all(15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                      if (isAlreadySeller)
+                        Text(
+                          authStatus,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.greenAccent,
                           ),
-                          child: const Text(
-                            "Become a Seller",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      if (!isAlreadySeller) ...[
+                        const SizedBox(height: 20),
+                        _buildTextField("Username", _usernameController),
+                        const SizedBox(height: 15),
+                        _buildPasswordField(
+                          "Password",
+                          _passwordController,
+                          _isPasswordVisible,
+                          (value) {
+                            setState(() => _isPasswordVisible = value);
+                          },
+                        ),
+                        const SizedBox(height: 15),
+                        _buildPasswordField(
+                          "Confirm Password",
+                          _confirmPasswordController,
+                          _isConfirmPasswordVisible,
+                          (value) {
+                            setState(() => _isConfirmPasswordVisible = value);
+                          },
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : _registerSeller,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              padding: const EdgeInsets.all(15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child:
+                                isLoading
+                                    ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                    : const Text(
+                                      "Become a Seller",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                           ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 20),
-                      // Display the status messages
-                      if (authStatus.isNotEmpty)
+                      if (authStatus.isNotEmpty && !isAlreadySeller)
                         Text(
                           authStatus,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
                           ),
-                        ),
-                      if (sellerDataStatus.isNotEmpty)
-                        Text(
-                          sellerDataStatus,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
+                          textAlign: TextAlign.center,
                         ),
                     ],
                   ),
@@ -183,7 +243,6 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
     );
   }
 
-  // Helper method to build a password field with visibility toggle
   Widget _buildPasswordField(
     String label,
     TextEditingController controller,
@@ -205,9 +264,7 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
             isPasswordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.white,
           ),
-          onPressed: () {
-            onVisibilityChanged(!isPasswordVisible);
-          },
+          onPressed: () => onVisibilityChanged(!isPasswordVisible),
         ),
       ),
     );
