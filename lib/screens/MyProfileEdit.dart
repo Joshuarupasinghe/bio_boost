@@ -4,8 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import '../services/seller_profile_service.dart';
 
 class MyProfileEdit extends StatefulWidget {
+  const MyProfileEdit({super.key});
+
   @override
   _MyProfileEditState createState() => _MyProfileEditState();
 }
@@ -15,6 +18,9 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final picker = ImagePicker();
+  // Initialize the seller profile service
+  final SellerProfileService _profileService = SellerProfileService();
+  bool _isLoading = true;
 
   File? _profileImage;
   String? _downloadUrl;

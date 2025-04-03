@@ -1,12 +1,18 @@
+import 'package:bio_boost/screens/home_company.dart';
+import 'package:bio_boost/screens/home_seller.dart';
+import 'package:bio_boost/screens/profile_company.dart';
+import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
+import 'package:bio_boost/screens/create_sales01.dart';
+import 'package:bio_boost/screens/create_sales02.dart';
 import 'package:flutter/material.dart';
-import 'chat_list.dart'; // Import the chat list screen
+import '../services/chat_service.dart';
+import 'chat_list.dart';
 import 'benefits.dart';
-import 'become_seller.dart'; //Import the become seller page
-
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String? userRole;
+  const HomePage({super.key, required this.userRole});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -14,18 +20,27 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 2; // Start with Home selected
+  int _unreadChatCount = 0;
 
-// List of screens for each tab
-final List<Widget> _screens = [
-  WantedCompanyPage(),
-  Center(child: Text('Wishlist Screen', style: TextStyle(color: Colors.white))),
-  BenefitsPage(), //Center(child: Text('Home Screen', style: TextStyle(color: Colors.white))),
-  ChatList(), // Chat screen
-  BecomeSellerPage(),//Center(child: Text('Profile Screen', style: TextStyle(color: Colors.white))),
-];
 
   @override
   Widget build(BuildContext context) {
+    // Assign profile page dynamically based on user role
+    List<Widget> screens = [
+      WantedCompanyPage(),
+      Center(
+        child: Text('Wishlist Screen', style: TextStyle(color: Colors.white)),
+      ),
+      widget.userRole == 'Buyer'
+        ? CompanyHomePage()
+        :SellerHomePage(),
+      ChatList(),
+      CreateSales01(),
+      widget.userRole == 'Buyer'
+          ? CompanyProfilePage()
+          : SellerProfilePage(), // Dynamic Profile Page
+    ];
+
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar:
@@ -76,52 +91,84 @@ final List<Widget> _screens = [
                           color: Colors.white,
                           size: 20,
                         ),
-                        padding: EdgeInsets.zero, // Remove default padding
+                        padding: EdgeInsets.zero,
                         onPressed: () {},
                       ),
                     ),
                   ],
                 ),
-                toolbarHeight:
-                    60, // Increase app bar height to accommodate larger logo
+                toolbarHeight: 60,
                 backgroundColor: Colors.grey[850],
                 elevation: 0,
               ),
+      body: screens[_currentIndex],
+      bottomNavigationBar: StreamBuilder<int>(
+  stream: ChatService().getUnreadChatCount(),
+  builder: (context, snapshot) {
+    if (snapshot.hasData) {
+      _unreadChatCount = snapshot.data!;
+    }
 
-      body: _screens[_currentIndex],
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.grey[850],
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.grey[500],
+      items: [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.fact_check),
+          label: 'Wanted',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.list_alt),
+          label: 'Wishlist',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Stack(
+            children: [
+              Icon(Icons.question_answer),
+              if (_unreadChatCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unreadChatCount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          label: 'Chat',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+    );
+  },
+),
 
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.grey[850],
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey[500],
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fact_check),
-            label: 'Wanted',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Wishlist',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.question_answer),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-
-        ],
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
     );
   }
 }
