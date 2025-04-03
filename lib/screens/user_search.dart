@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_detail.dart';
 
 class UserSearchScreen extends StatefulWidget {
-  const UserSearchScreen({super.key});
+  const UserSearchScreen({Key? key}) : super(key: key);
 
   @override
   _UserSearchScreenState createState() => _UserSearchScreenState();
@@ -39,7 +39,7 @@ Future<void> _performSearch(String searchText) async {
     if (searchText.isNotEmpty) {
       query = query
           .where('firstName', isGreaterThanOrEqualTo: searchText)
-          .where('firstName', isLessThanOrEqualTo: '$searchText\uf8ff');
+          .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff');
     }
 
     QuerySnapshot querySnapshot = await query.get();

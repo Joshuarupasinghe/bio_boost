@@ -22,7 +22,7 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   // Controllers
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
-  TextEditingContfinal  contactController = TextEditingController();
+  TextEditingController contactController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
   String selectedDistrict = "Colombo";

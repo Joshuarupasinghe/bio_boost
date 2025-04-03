@@ -3,6 +3,11 @@ import 'package:bio_boost/screens/wishlist.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
+import '../models/wanted_sales_model.dart';
+import '../services/company_profile_service.dart';
+import 'add_want.dart';
 
 import 'sign_in.dart';
 
