@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home.dart';
 import 'sign_up.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -11,50 +12,70 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController _emailOrUsernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false; // For loading indicator
-Future<void> _signIn() async {
-  final email = emailController.text.trim();
-  final password = passwordController.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Please enter email and password")),
-    );
-    return;
-  }
+  Future<void> _signIn() async {
+    String input = _emailOrUsernameController.text.trim();
+    String password = _passwordController.text.trim();
 
-  setState(() => _isLoading = true);
-
-  try {
-    final user = await AuthService().signIn(email, password);
-
-    if (user != null) {
-      String? userRole = await AuthService().getUserRole(user['user'].uid);
+    if (input.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sign In Successful!")),
+        const SnackBar(content: Text("Please enter email/username and password")),
       );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(userRole: userRole ?? 'Buyer'), // Default to 'Buyer'
-      ),
-    );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid email or password.")),
-      );
+      return;
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error: ${e.toString()}")),
-    );
-  } finally {
-    setState(() => _isLoading = false);
+
+    setState(() => _isLoading = true);
+
+    try {
+      String email = input;
+
+      // ✅ Check if the input is a username (No '@' means it's likely a username)
+      if (!input.contains('@')) {
+        var userSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: input)
+            .limit(1)
+            .get();
+
+        if (userSnapshot.docs.isNotEmpty) {
+          email = userSnapshot.docs.first['email']; // Retrieve the email
+        } else {
+          throw "Username not found!";
+        }
+      }
+
+      // ✅ Sign in using retrieved email and password
+      final user = await AuthService().signIn(email, password);
+
+      if (user != null) {
+        String? userRole = await AuthService().getUserRole(user['user'].uid);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Sign In Successful!")),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(userRole: userRole ?? 'Buyer'), // Default to 'Buyer'
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid email or password.")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +96,7 @@ Future<void> _signIn() async {
               ),
               const SizedBox(height: 20),
 
-              buildTextField("Email", Icons.email, emailController, false),
+              buildTextField("Email or Username", Icons.person, _emailOrUsernameController, false),
               const SizedBox(height: 15),
               buildPasswordField(),
               const SizedBox(height: 20),
@@ -152,7 +173,7 @@ Future<void> _signIn() async {
 
   Widget buildPasswordField() {
     return TextField(
-      controller: passwordController,
+      controller: _passwordController,
       obscureText: !_isPasswordVisible,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
