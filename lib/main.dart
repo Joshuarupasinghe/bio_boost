@@ -6,7 +6,6 @@ import 'firebase_options.dart';
 import './screens/home.dart';
 import './screens/profile_company.dart';
 import './screens/sign_in.dart';
-import './screens/buyer_signup.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +43,6 @@ class MyApp extends StatelessWidget {
           return HomePage(userRole: userRole ?? 'Buyer'); // Default role if null
         },
         '/profile_company': (context) => const CompanyProfilePage(),
-        '/buyer_signup': (context) => const BuyerSignupPage(),
       },
     );
   }
