@@ -3,6 +3,8 @@ import 'package:bio_boost/screens/create_sales01.dart';
 import 'package:bio_boost/screens/wanted_sales.dart';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/services/service_request_service.dart';
+import 'package:bio_boost/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
 class SellerHomePage extends StatefulWidget {
@@ -15,7 +17,11 @@ class SellerHomePage extends StatefulWidget {
 class _SellerHomePageState extends State<SellerHomePage> {
   final ServiceRequestService _serviceRequestService = ServiceRequestService();
   List<Map<String, dynamic>> _serviceRequests = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   bool _isLoading = true;
+  String? _errorMessage;
+  String? _userRole;
 
   final List<Map<String, String>> categories = [
     {'title': 'Paddy Husk & Straw', 'url': 'images/Paddy Husk & Straw.jpg'},
@@ -30,6 +36,36 @@ class _SellerHomePageState extends State<SellerHomePage> {
   void initState() {
     super.initState();
     _fetchServiceRequests();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        String? role = await _authService.getUserRole(user.uid);
+        setState(() {
+          _userRole = role;
+          _isLoading = false;
+        });
+
+        if (role != 'Seller') {
+          setState(() {
+            _errorMessage = 'You do not have permission to access this page.';
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No user is signed in.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to check user role: $e';
+      });
+    }
   }
 
   Future<void> _fetchServiceRequests() async {
@@ -51,6 +87,56 @@ class _SellerHomePageState extends State<SellerHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(
+          title: const Text("Home", style: TextStyle(color: Colors.white)),
+          centerTitle: true,
+          backgroundColor: Colors.grey[900],
+          elevation: 0,
+        ),
+        body: Center(
+          child: Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    if (_userRole != 'Seller') {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(
+          title: const Text(
+            "Access Denied",
+            style: TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.grey[900],
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text(
+            "You do not have permission to access this page.",
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
