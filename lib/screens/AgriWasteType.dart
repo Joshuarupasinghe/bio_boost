@@ -35,7 +35,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_currentUser == null) {
+    if (_currentUserId == null) {
       return Scaffold(
         body: Center(child: Text("Please sign in to view the listings.")),
       );
