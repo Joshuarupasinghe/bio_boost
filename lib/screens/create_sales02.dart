@@ -95,16 +95,16 @@ void initState() {
 
 
   // Function to upload images to Firebase Storage and get URLs
-  Future<String> uploadImageToFirebase(File image, String imageName) async {
-    Reference storageRef = FirebaseStorage.instance
-        .ref()
-        .child('sales_images')
-        .child('$uid/$imageName.jpg');
+  // Future<String> uploadImageToFirebase(File image, String imageName) async {
+  //   Reference storageRef = FirebaseStorage.instance
+  //       .ref()
+  //       .child('sales_images')
+  //       .child('$uid/$imageName.jpg');
 
-    UploadTask uploadTask = storageRef.putFile(image);
-    TaskSnapshot snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
-  }
+  //   UploadTask uploadTask = storageRef.putFile(image);
+  //   TaskSnapshot snapshot = await uploadTask;
+  //   return await snapshot.ref.getDownloadURL();
+  // }
 
   // Function to save the sale to Firestore with the images
   void saveSaleToDatabase() async {
@@ -114,17 +114,17 @@ void initState() {
     }
 
     // Upload main image and get URL
-    String? mainImageUrl;
-    if (_mainImage != null) {
-      mainImageUrl = await uploadImageToFirebase(_mainImage!, 'mainImage');
-    }
+    // String? mainImageUrl;
+    // if (_mainImage != null) {
+    //   mainImageUrl = await uploadImageToFirebase(_mainImage!, 'mainImage');
+    // }
 
-    // Upload sub images and get URLs
-    List<String> subImageUrls = [];
-    for (var i = 0; i < _subImages.length; i++) {
-      String url = await uploadImageToFirebase(_subImages[i], 'subImage_$i');
-      subImageUrls.add(url);
-    }
+    // // Upload sub images and get URLs
+    // List<String> subImageUrls = [];
+    // for (var i = 0; i < _subImages.length; i++) {
+    //   String url = await uploadImageToFirebase(_subImages[i], 'subImage_$i');
+    //   subImageUrls.add(url);
+    // }
 
     // Save sale data to Firestore
     FirebaseFirestore.instance.collection('sales').add({
@@ -137,8 +137,8 @@ void initState() {
       's_location': _locationController.text,
       's_address': _addressController.text,
       's_contactNumber': _contactNumberController.text,
-      's_mainImage': mainImageUrl,
-      's_otherImages': subImageUrls,
+      // 's_mainImage': mainImageUrl,
+      // 's_otherImages': subImageUrls,
       'timestamp': FieldValue.serverTimestamp(),
     }).then((_) {
       print("Sale created successfully!");
@@ -260,19 +260,19 @@ void initState() {
             // Image picker buttons
             const SizedBox(height: 24),
             _buildImagePickerButton('Pick Main Image', pickMainImage),
-            _mainImage != null
-                ? Image.network(_mainImage!.path, height: 100) // Web support
-                : Container(),
+            // _mainImage != null
+            //     ? Image.network(_mainImage!.path, height: 100) // Web support
+            //     : Container(),
 
             const SizedBox(height: 16),
 
             _buildImagePickerButton('Pick Sub Images (Max 4)', pickSubImages),
-            _subImages.isNotEmpty
-                ? Wrap(
-                    spacing: 8,
-                    children: _subImages.map((file) => Image.network(file.path, height: 80)).toList(), // Web support
-                  )
-                : Container(),
+            // _subImages.isNotEmpty
+            //     ? Wrap(
+            //         spacing: 8,
+            //         children: _subImages.map((file) => Image.network(file.path, height: 80)).toList(), // Web support
+            //       )
+            //     : Container(),
 
             const SizedBox(height: 24),
             ElevatedButton(
