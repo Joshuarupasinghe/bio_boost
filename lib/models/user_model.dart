@@ -8,7 +8,7 @@ class UserModel {
   final String address;
   final String district;
   final String city;
-  final String role; // 'buyer' or 'seller'
+  final String role; // New field: 'buyer' or 'seller'
 
   UserModel({
     required this.uid,
@@ -41,18 +41,17 @@ class UserModel {
 
   // Convert Map to UserModel (for Firestore retrieving)
   factory UserModel.fromMap(Map<String, dynamic> map) {
-    // Safely extract values with fallback defaults
     return UserModel(
-      uid: map['uid'] ?? '',
-      firstName: map['firstName'] ?? 'Default',
-      lastName: map['lastName'] ?? 'User',
-      email: map['email'] ?? 'default@example.com',
-      companyName: map['companyName'] ?? 'Default Company',
-      phone: map['phone'] ?? '1234567890',
-      address: map['address'] ?? 'Default Address',
-      district: map['district'] ?? 'Default District',
-      city: map['city'] ?? 'Default City',
-      role: map['role'] ?? 'buyer', // Default to 'buyer' if not provided
+      uid: map['uid'],
+      firstName: map['firstName'],
+      lastName: map['lastName'],
+      email: map['email'],
+      companyName: map['companyName'],
+      phone: map['phone'],
+      address: map['address'],
+      district: map['district'],
+      city: map['city'],
+      role: map['role'] ?? 'seller', // Default to 'seller' if not provided
     );
   }
 

@@ -258,17 +258,17 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => AgriWasteTypePage(
-                                selectedCategory: categories[index]['title']!,
-                              ),
-                        ),
-                      );
-                    },
+                    // onTap: () {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder:
+                    //           (context) => AgriWasteTypePage(
+                    //             selectedCategory: categories[index]['title']!,
+                    //           ),
+                    //     ),
+                    //   );
+                    // },
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
