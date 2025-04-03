@@ -139,4 +139,23 @@ class ChatService {
 
   await batch.commit();
   }
+
+  Stream<int> getUnreadChatCount() {
+  return _firestore
+      .collection('chatRooms')
+      .where('participants', arrayContains: currentUserId)
+      .snapshots()
+      .map((snapshot) {
+        int totalUnread = 0;
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          if (data.containsKey('unreadCounts') &&
+              data['unreadCounts'][currentUserId] != null) {
+            totalUnread += (data['unreadCounts'][currentUserId] as int);
+          }
+        }
+        return totalUnread;
+      });
+}
+
 }
