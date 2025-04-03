@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_detail.dart';
 
 class UserSearchScreen extends StatefulWidget {
-  const UserSearchScreen({super.key});
+  const UserSearchScreen({Key? key}) : super(key: key);
 
   @override
   _UserSearchScreenState createState() => _UserSearchScreenState();
@@ -25,57 +25,37 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     _performSearch('');
   }
 
-  Future<void> _performSearch(String searchText) async {
-    setState(() {
-      _isLoading = true;
-    });
+Future<void> _performSearch(String searchText) async {
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      QuerySnapshot querySnapshot;
+  try {
+    Query query = _firestore.collection('users');
 
-      if (searchText.isEmpty) {
-        // Get all users
-        querySnapshot = await _firestore.collection('users').get();
+    // Exclude the current user
+    query = query.where('email', isNotEqualTo: FirebaseAuth.instance.currentUser!.email);
 
-        // Filter current user out in memory
-        _searchResults =
-            querySnapshot.docs
-                .where(
-                  (doc) =>
-                      (doc.data() as Map<String, dynamic>)['uid'] !=
-                      currentUserId,
-                )
-                .toList();
-      } else {
-        // Search for users by first name
-        querySnapshot =
-            await _firestore
-                .collection('users')
-                .where('firstName', isGreaterThanOrEqualTo: searchText)
-                .where('firstName', isLessThanOrEqualTo: '$searchText\uf8ff')
-                .get();
-
-        // Filter current user out in memory
-        _searchResults =
-            querySnapshot.docs
-                .where(
-                  (doc) =>
-                      (doc.data() as Map<String, dynamic>)['uid'] !=
-                      currentUserId,
-                )
-                .toList();
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-    } catch (error) {
-      print('Error searching users: $error');
-      setState(() {
-        _isLoading = false;
-      });
+    if (searchText.isNotEmpty) {
+      query = query
+          .where('firstName', isGreaterThanOrEqualTo: searchText)
+          .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff');
     }
+
+    QuerySnapshot querySnapshot = await query.get();
+
+    setState(() {
+      _searchResults = querySnapshot.docs;
+      _isLoading = false;
+    });
+  } catch (error) {
+    print('Error searching users: $error');
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -166,23 +146,43 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                         ),
                       ],
                     ),
+                    // In UserSearchScreen.dart, modify the onTap function:
                     onTap: () async {
-                      final chatService = ChatService();
-                      final chatRoomId = await chatService.createChatRoom(
-                        userId,
-                      );
+                      try {
+                        final chatService = ChatService();
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => ChatDetailScreen(
-                                name: '$firstName $lastName',
-                                avatar: initials,
-                                userId: userId,
-                              ),
-                        ),
-                      );
+                        // Use either the document ID or the uid field, whichever is correct
+                        final userId =
+                            _searchResults[index].id;
+
+                        final chatRoomId = await chatService.createChatRoom(userId);
+
+                        if (chatRoomId.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ChatDetailScreen(
+                                    name: '$firstName $lastName',
+                                    avatar: initials,
+                                    userId: userId,
+                                  ),
+                            ),
+                          );
+                        } else {
+                          // Show error if chat room creation returned empty ID
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to create chat room'),
+                            ),
+                          );
+                        }
+                      } catch (error) {
+                        print('Error creating chat room: $error');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $error')),
+                        );
+                      }
                     },
                   );
                 },
