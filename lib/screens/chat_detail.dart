@@ -2,7 +2,6 @@ import 'package:bio_boost/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String name;
@@ -36,14 +35,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _setupChat() async {
     // Create or get chat room
     _chatRoomId = await _chatService.createChatRoom(widget.userId);
-    
+
     // Get messages stream
     _messagesStream = _chatService.getMessages(_chatRoomId);
-    
+
     setState(() {
       _isLoading = false;
     });
-    
+
     // Mark messages as read when opening the chat
     _chatService.markMessagesAsRead(_chatRoomId, widget.userId);
   }
@@ -77,76 +76,80 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           children: [
             CircleAvatar(
               backgroundColor: Colors.teal,
-              child: Text(
-                widget.avatar,
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text(widget.avatar, style: TextStyle(color: Colors.white)),
             ),
             SizedBox(width: 10),
-            Text(
-              widget.name,
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                widget.name,
+                style: TextStyle(fontWeight: FontWeight.bold),
+                overflow:
+                    TextOverflow.ellipsis, // Add this to handle text overflow
+              ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.call),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
+          IconButton(icon: Icon(Icons.call), onPressed: () {}),
+          IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: _messagesStream,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: _messagesStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Error: ${snapshot.error}'),
+                          );
+                        }
 
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
 
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No messages yet. Start a conversation!',
-                            style: TextStyle(color: Colors.grey),
-                          ),
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No messages yet. Start a conversation!',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          );
+                        }
+
+                        final messages = snapshot.data!.docs;
+                        return ListView.builder(
+                          padding: EdgeInsets.all(10),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final message =
+                                messages[index].data() as Map<String, dynamic>;
+                            final isMe =
+                                message['senderId'] ==
+                                _chatService.currentUserId;
+                            final time = DateTime.fromMillisecondsSinceEpoch(
+                              message['timestamp'],
+                            );
+
+                            return _buildMessageItem({
+                              'text': message['text'],
+                              'isMe': isMe,
+                              'time': _formatTime(time),
+                            });
+                          },
                         );
-                      }
-
-                      final messages = snapshot.data!.docs;
-                      return ListView.builder(
-                        padding: EdgeInsets.all(10),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index].data() as Map<String, dynamic>;
-                          final isMe = message['senderId'] == _chatService.currentUserId;
-                          final time = DateTime.fromMillisecondsSinceEpoch(message['timestamp']);
-
-                          return _buildMessageItem({
-                            'text': message['text'],
-                            'isMe': isMe,
-                            'time': _formatTime(time),
-                          });
-                        },
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
-                _buildMessageInput(),
-              ],
-            ),
+                  _buildMessageInput(),
+                ],
+              ),
     );
   }
 
@@ -168,17 +171,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              message['text'],
-              style: TextStyle(color: Colors.white),
-            ),
+            Text(message['text'], style: TextStyle(color: Colors.white)),
             SizedBox(height: 4),
             Text(
               message['time'],
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 10),
             ),
           ],
         ),
