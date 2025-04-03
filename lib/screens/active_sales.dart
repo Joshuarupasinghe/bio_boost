@@ -19,19 +19,21 @@ class _ActiveSalesState extends State<ActiveSales> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _currentUserId;
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
-    _getCurrentUser();
+    _fetchUserDetails();
   }
 
-  Future<void> _getCurrentUser() async {
+  Future<void> _fetchUserDetails() async {
     User? user = _auth.currentUser;
     if (user != null) {
       String? role = await _authService.getUserRole(user.uid);
       setState(() {
         _currentUserId = user.uid;
+        _userRole = role;
       });
       if (role == 'Seller') {
         _fetchSellerSales();
@@ -132,17 +134,13 @@ class _ActiveSalesState extends State<ActiveSales> {
                       title: Text(
                         'Type: ${sale.s_type}',
                         style: TextStyle(
-                          color: Colors.white, // Darker teal
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Location: ${sale.s_location}',
-                            style: const TextStyle(color: Colors.teal),
-                          ),
                           Text(
                             'Weight: ${sale.s_weight}',
                             style: const TextStyle(color: Colors.teal),
