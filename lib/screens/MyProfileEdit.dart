@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
 class MyProfileEdit extends StatefulWidget {
@@ -8,190 +11,51 @@ class MyProfileEdit extends StatefulWidget {
 }
 
 class _MyProfileEditState extends State<MyProfileEdit> {
-  File? _profileImage;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final picker = ImagePicker();
 
-  // Controllers for text fields
-  TextEditingController firstNameController = TextEditingController(
-    text: "Nimal",
-  );
-  TextEditingController lastNameController = TextEditingController(
-    text: "Gunawardhana",
-  );
-  TextEditingController contactController = TextEditingController(
-    text: "077 xxxxxxx",
-  );
+  File? _profileImage;
+  String? _downloadUrl;
+
+  // Controllers
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController contactController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
-  // Dropdown values
   String selectedDistrict = "Colombo";
   String selectedCity = "Nugegoda";
 
-  final List<String> districts = [
-    "Colombo",
-    "Gampaha",
-    "Kalutara",
-    "Kandy",
-    "Matale",
-    "Nuwara Eliya",
-    "Galle",
-    "Matara",
-    "Hambantota",
-    "Jaffna",
-    "Kilinochchi",
-    "Mannar",
-    "Mullaitivu",
-    "Vavuniya",
-    "Trincomalee",
-    "Batticaloa",
-    "Ampara",
-    "Kurunegala",
-    "Puttalam",
-    "Anuradhapura",
-    "Polonnaruwa",
-    "Badulla",
-    "Monaragala",
-    "Ratnapura",
-    "Kegalle",
-  ];
-  final List<String> cities = [
-    "Agarapatana",
-    "Ahangama",
-    "Akkaraipattu",
-    "Akurana",
-    "Aluthgama",
-    "Ambalangoda",
-    "Ambalantota",
-    "Anuradhapura",
-    "Akuressa",
-    "Baddegama",
-    "Badulla",
-    "Bakamuna",
-    "Balangoda",
-    "Bandaragama",
-    "Bandarawela",
-    "Batticaloa",
-    "Beliatte",
-    "Beruwala",
-    "Bibile",
-    "Biyagama",
-    "Bulathsinhala",
-    "Buttala",
-    "Chavakachcheri",
-    "Cheddikulam",
-    "Chilaw",
-    "Chunnakam",
-    "Colombo",
-    "Dambulla",
-    "Dankotuwa",
-    "Dehiwala-Mount Lavinia",
-    "Dickwella",
-    "Dikwella",
-    "Eravur",
-    "Elpitiya",
-    "Embilipitiya",
-    "Galewela",
-    "Galle",
-    "Gampaha",
-    "Gampola",
-    "Ginigathena",
-    "Hakmana",
-    "Hambantota",
-    "Haputale",
-    "Hatton",
-    "Hikkaduwa",
-    "Hingurakgoda",
-    "Horana",
-    "Ingiriya",
-    "Iranamadu",
-    "Ja-Ela",
-    "Jaffna",
-    "Kadawatha",
-    "Kadugannawa",
-    "Kaduruwela",
-    "Kalkudah",
-    "Kalmunai",
-    "Kalutara",
-    "Kamburupitiya",
-    "Kandapola",
-    "Kandy",
-    "Karainagar",
-    "Karapitiya",
-    "Katugastota",
-    "Kegalle",
-    "Kekirawa",
-    "Kelaniya",
-    "Kilinochchi",
-    "Kinniya",
-    "Kiribathgoda",
-    "Kolonnawa",
-    "Kopay",
-    "Kotagala",
-    "Kotikawatta",
-    "Kuliyapitiya",
-    "Kundasale",
-    "Kurunegala",
-    "Madhu",
-    "Maharagama",
-    "Mannar",
-    "Maskeliya",
-    "Matale",
-    "Matara",
-    "Matugama",
-    "Mawanella",
-    "Medawachchiya",
-    "Mihintale",
-    "Minuwangoda",
-    "Moratuwa",
-    "Mullaitivu",
-    "Muttur",
-    "Nanattan",
-    "Narammala",
-    "Nawalapitiya",
-    "Negombo",
-    "Nedunkeni",
-    "Nugegoda",
-    "Nuwara Eliya",
-    "Naula",
-    "Oddusuddan",
-    "Palapathwela",
-    "Pallai",
-    "Panadura",
-    "Paranthan",
-    "Pelamadulla",
-    "Peradeniya",
-    "Pesalai",
-    "Pilimatalawa",
-    "Point Pedro",
-    "Polgahawela",
-    "Polonnaruwa",
-    "Pottuvil",
-    "Puthukkudiyiruppu",
-    "Puttalam",
-    "Rambukkana",
-    "Rattota",
-    "Ratmalana",
-    "Ratnapura",
-    "Sigiriya",
-    "Sri Jayawardenepura Kotte",
-    "Talawakelle",
-    "Tangalle",
-    "Thihagoda",
-    "Tissamaharama",
-    "Trincomalee",
-    "Udugama",
-    "Ukuwela",
-    "Valaichchenai",
-    "Vavuniya",
-    "Walasmulla",
-    "Warakapola",
-    "Wattala",
-    "Weeraketiya",
-    "Weligama",
-    "Welimada",
-    "Wellawaya",
-    "Wennappuwa",
-  ];
+  final List<String> districts = ["Colombo", "Gampaha", "Kandy"];
+  final List<String> cities = ["Nugegoda", "Galle", "Kandy"];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+        setState(() {
+          firstNameController.text = data['firstName'] ?? '';
+          lastNameController.text = data['lastName'] ?? '';
+          contactController.text = data['contactNumber'] ?? '';
+          emailController.text = data['email'] ?? '';
+          selectedDistrict = data['district'] ?? 'Colombo';
+          selectedCity = data['city'] ?? 'Nugegoda';
+          _downloadUrl = data['profileImagePath'];
+        });
+      }
+    }
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -199,6 +63,50 @@ class _MyProfileEditState extends State<MyProfileEdit> {
       setState(() {
         _profileImage = File(pickedFile.path);
       });
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      String userId = _auth.currentUser!.uid;
+      Reference ref = _storage.ref().child('profile_images/$userId.jpg');
+      await ref.putFile(image);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print("❌ Error uploading image: $e");
+      return null;
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) {
+        print("❌ User not signed in!");
+        return;
+      }
+
+      String? imageUrl = _downloadUrl;
+      if (_profileImage != null) {
+        print("📸 Uploading profile image...");
+        imageUrl = await _uploadImage(_profileImage!);
+      }
+
+      Map<String, dynamic> userProfile = {
+        'firstName': firstNameController.text,
+        'lastName': lastNameController.text,
+        'contactNumber': contactController.text,
+        'email': emailController.text,
+        'district': selectedDistrict,
+        'city': selectedCity,
+        'profileImagePath': imageUrl,
+      };
+
+      print("📤 Saving profile data...");
+      await _firestore.collection('users').doc(user.uid).set(userProfile);
+      print("✅ Profile updated successfully!");
+    } catch (e) {
+      print("❌ Error saving profile: $e");
     }
   }
 
@@ -221,9 +129,12 @@ class _MyProfileEditState extends State<MyProfileEdit> {
                     backgroundImage:
                         _profileImage != null
                             ? FileImage(_profileImage!)
-                            : null,
+                            : (_downloadUrl != null
+                                    ? NetworkImage(_downloadUrl!)
+                                    : null)
+                                as ImageProvider?,
                     child:
-                        _profileImage == null
+                        _profileImage == null && _downloadUrl == null
                             ? Icon(Icons.person, color: Colors.white, size: 50)
                             : null,
                   ),
@@ -242,91 +153,36 @@ class _MyProfileEditState extends State<MyProfileEdit> {
                 ],
               ),
             ),
-
             SizedBox(height: 10),
 
-            // Username Placeholder
-            Text(
-              "UserName",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            // User Fields
+            _buildTextField(firstNameController, "First Name"),
+            _buildTextField(lastNameController, "Last Name"),
+            _buildTextField(contactController, "Contact Number"),
+            _buildTextField(emailController, "Email (Optional)"),
+
+            // Location
+            _buildDropdown("District", districts, selectedDistrict, (newValue) {
+              setState(() {
+                selectedDistrict = newValue!;
+              });
+            }),
+            _buildDropdown("City", cities, selectedCity, (newValue) {
+              setState(() {
+                selectedCity = newValue!;
+              });
+            }),
 
             SizedBox(height: 20),
-
-            // Name Fields
-            _buildSectionTitle("Name"),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(firstNameController, "First Name"),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildTextField(lastNameController, "Last Name"),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 15),
-
-            // Location Fields
-            _buildSectionTitle("Location"),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDropdown(
-                    "District",
-                    districts,
-                    selectedDistrict,
-                    (newValue) {
-                      setState(() {
-                        selectedDistrict = newValue!;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildDropdown("City", cities, selectedCity, (
-                    newValue,
-                  ) {
-                    setState(() {
-                      selectedCity = newValue!;
-                    });
-                  }),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 15),
-
-            // Contact Number
-            _buildSectionTitle("Contact Number"),
-            _buildTextField(contactController, "077 xxxxxxx"),
-
-            SizedBox(height: 15),
-
-            // Optional Email
-            _buildSectionTitle("Add New Email (Optional)"),
-            _buildTextField(emailController, "Enter your email"),
-
-            SizedBox(height: 20),
-
             // Update Button
             ElevatedButton(
-              onPressed: () {
-                // Save Profile Logic
-              },
+              onPressed: _saveProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
                 minimumSize: Size(double.infinity, 50),
               ),
-              child: Text("Update"),
+              child: Text("Update Profile"),
             ),
           ],
         ),
@@ -334,57 +190,47 @@ class _MyProfileEditState extends State<MyProfileEdit> {
     );
   }
 
-  // Widget for text fields
   Widget _buildTextField(TextEditingController controller, String label) {
-    return TextField(
-      controller: controller,
-      style: TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: Colors.grey[800],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.white70),
+          filled: true,
+          fillColor: Colors.grey[800],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }
 
-  // Widget for dropdown fields
   Widget _buildDropdown(
     String label,
     List<String> items,
     String selectedItem,
     Function(String?) onChanged,
   ) {
-    return DropdownButtonFormField<String>(
-      value: selectedItem,
-      dropdownColor: Colors.grey[800],
-      style: TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: Colors.grey[800],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      items:
-          items.map((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  // Widget for section titles
-  Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: selectedItem,
+        dropdownColor: Colors.grey[800],
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.white70),
+          filled: true,
+          fillColor: Colors.grey[800],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
+        items:
+            items.map((String value) {
+              return DropdownMenuItem<String>(value: value, child: Text(value));
+            }).toList(),
+        onChanged: onChanged,
       ),
     );
   }

@@ -1,4 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AgriWasteTypePage(),
+    );
+  }
+}
 
 class AgriWasteTypePage extends StatefulWidget {
   @override
@@ -39,116 +57,9 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
   ];
 
   Map<String, List<String>> districtCities = {
-    "Colombo": [
-      "Colombo",
-      "Dehiwala-Mount Lavinia",
-      "Sri Jayawardenepura Kotte",
-      "Moratuwa",
-      "Kolonnawa",
-      "Ratmalana",
-      "Nugegoda",
-      "Maharagama",
-      "Kotikawatta",
-    ],
-    "Gampaha": [
-      "Gampaha",
-      "Negombo",
-      "Kelaniya",
-      "Kadawatha",
-      "Minuwangoda",
-      "Kiribathgoda",
-      "Ja-Ela",
-      "Wattala",
-      "Biyagama",
-    ],
-    "Kalutara": [
-      "Kalutara",
-      "Panadura",
-      "Horana",
-      "Matugama",
-      "Beruwala",
-      "Aluthgama",
-      "Bandaragama",
-      "Ingiriya",
-      "Bulathsinhala",
-    ],
-    "Kandy": [
-      "Kandy",
-      "Katugastota",
-      "Peradeniya",
-      "Gampola",
-      "Kundasale",
-      "Kadugannawa",
-      "Nawalapitiya",
-      "Pilimatalawa",
-      "Akurana",
-    ],
-    "Matale": [
-      "Matale",
-      "Dambulla",
-      "Sigiriya",
-      "Rattota",
-      "Galewela",
-      "Palapathwela",
-      "Naula",
-      "Ukuwela",
-    ],
-    "Nuwara Eliya": [
-      "Nuwara Eliya",
-      "Hatton",
-      "Talawakelle",
-      "Ginigathena",
-      "Kandapola",
-      "Maskeliya",
-      "Kotagala",
-      "Agarapatana",
-    ],
-
-    "Galle": [
-      "Galle",
-      "Ambalangoda",
-      "Hikkaduwa",
-      "Elpitiya",
-      "Baddegama",
-      "Udugama",
-      "Ahangama",
-      "Karapitiya",
-    ],
-    "Matara": [
-      "Matara",
-      "Weligama",
-      "Dikwella",
-      "Akuressa",
-      "Hakmana",
-      "Kamburupitiya",
-      "Thihagoda",
-      "Dickwella",
-    ],
-    "Hambantota": [
-      "Hambantota",
-      "Tangalle",
-      "Ambalantota",
-      "Tissamaharama",
-      "Beliatta",
-      "Weeraketiya",
-      "Walasmulla",
-    ],
-    "Jaffna": ["Jaffna", "Chavakachcheri", "Nallur", "Point Pedro", "Kopay"],
-    "Kilinochchi": ["Kilinochchi", "Paranthan", "Pallai", "Iranamadu"],
-    "Mannar": ["Mannar", "Pesalai", "Madhu", "Nanattan"],
-    "Mullaitivu": ["Mullaitivu", "Puthukkudiyiruppu", "Oddusuddan"],
-    "Vavuniya": ["Vavuniya", "Cheddikulam", "Nedunkeni"],
-    "Trincomalee": ["Trincomalee", "Kantale", "Kinniya", "Muttur"],
-    "Batticaloa": ["Batticaloa", "Kalkudah", "Valaichchenai", "Eravur"],
-    "Ampara": ["Ampara", "Kalmunai", "Akkaraipattu", "Pottuvil"],
-    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Polgahawela"],
-    "Puttalam": ["Puttalam", "Chilaw", "Dankotuwa", "Wennappuwa"],
-    "Anuradhapura": ["Anuradhapura", "Mihintale", "Kekirawa", "Medawachchiya"],
-    "Polonnaruwa": ["Polonnaruwa", "Hingurakgoda", "Kaduruwela", "Bakamuna"],
-    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada"],
-    "Monaragala": ["Monaragala", "Wellawaya", "Bibile", "Buttala"],
-    "Ratnapura": ["Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla"],
-    "Kegalle": ["Kegalle", "Mawanella", "Rambukkana", "Warakapola"],
+    "Colombo": ["Colombo", "Dehiwala", "Moratuwa"],
+    "Gampaha": ["Gampaha", "Negombo", "Kelaniya"],
+    "Kandy": ["Kandy", "Katugastota", "Peradeniya"],
   };
 
   List<String> cities = [];
@@ -166,10 +77,43 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
     "Other",
   ];
 
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> saveDataToFirebase() async {
+    if (selectedDistrict != null &&
+        selectedCity != null &&
+        selectedWasteType != null) {
+      try {
+        await _firestore.collection("agri_waste_data").add({
+          "district": selectedDistrict,
+          "city": selectedCity,
+          "wasteType": selectedWasteType,
+          "timestamp": FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Data saved successfully!")));
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Please select all fields!")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
+      appBar: AppBar(
+        title: Text("Agri Waste Type"),
+        backgroundColor: Colors.black,
+      ),
       body: Padding(
         padding: EdgeInsets.all(10),
         child: Column(
@@ -234,9 +178,33 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
                   ),
                   SizedBox(height: 10),
 
+                  DropdownButtonFormField<String>(
+                    dropdownColor: Colors.grey[700],
+                    value: selectedWasteType,
+                    onChanged:
+                        (value) => setState(() => selectedWasteType = value),
+                    items:
+                        wasteTypes
+                            .map(
+                              (w) => DropdownMenuItem(
+                                value: w,
+                                child: Text(
+                                  w,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                    decoration: InputDecoration(
+                      labelText: "Agri Waste Type",
+                      labelStyle: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+
                   ElevatedButton(
-                    onPressed: () {},
-                    child: Text("Filter"),
+                    onPressed: saveDataToFirebase,
+                    child: Text("Save Data"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
@@ -245,87 +213,53 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
                 ],
               ),
             ),
-
-            SizedBox(height: 10),
-
-            DropdownButtonFormField<String>(
-              dropdownColor: Colors.grey[700],
-              value: selectedWasteType,
-              onChanged: (value) => setState(() => selectedWasteType = value),
-              items:
-                  wasteTypes
-                      .map(
-                        (w) => DropdownMenuItem(
-                          value: w,
-                          child: Text(w, style: TextStyle(color: Colors.white)),
-                        ),
-                      )
-                      .toList(),
-              decoration: InputDecoration(
-                labelText: "Agri Waste Type",
-                labelStyle: TextStyle(color: Colors.white),
-              ),
-            ),
-
-            SizedBox(height: 10),
+            SizedBox(height: 20),
 
             Expanded(
-              child: ListView.builder(
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return Card(
-                    color: Colors.grey[800],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey,
-                        child: Center(
-                          child: Text(
-                            "Image",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        "Owner: xxxxxxxxxx",
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection("agri_waste_data").snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No data available",
                         style: TextStyle(color: Colors.white),
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Location: XYZ",
+                    );
+                  }
+
+                  final data = snapshot.data!.docs;
+                  return ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, index) {
+                      var doc = data[index];
+                      return Card(
+                        color: Colors.grey[800],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            "Waste Type: ${doc["wasteType"]}",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            "Location: ${doc["city"]}, ${doc["district"]}",
                             style: TextStyle(color: Colors.white54),
                           ),
-                          Text(
-                            "Type: Type X",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Text(
-                            "Weight: 20kg",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Text(
-                            "Price: \$XX",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Row(
-                            children: List.generate(5, (starIndex) {
-                              return Icon(
-                                starIndex < 2 ? Icons.star : Icons.star_border,
-                                color: Colors.yellow,
-                                size: 20,
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                      trailing: Icon(Icons.phone, color: Colors.white),
-                    ),
+                          trailing: Icon(Icons.delete, color: Colors.red),
+                          onTap: () async {
+                            await _firestore
+                                .collection("agri_waste_data")
+                                .doc(doc.id)
+                                .delete();
+                          },
+                        ),
+                      );
+                    },
                   );
                 },
               ),
