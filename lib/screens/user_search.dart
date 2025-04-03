@@ -25,57 +25,37 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     _performSearch('');
   }
 
-  Future<void> _performSearch(String searchText) async {
-    setState(() {
-      _isLoading = true;
-    });
+Future<void> _performSearch(String searchText) async {
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      QuerySnapshot querySnapshot;
+  try {
+    Query query = _firestore.collection('users');
 
-      if (searchText.isEmpty) {
-        // Get all users
-        querySnapshot = await _firestore.collection('users').get();
+    // Exclude the current user
+    query = query.where('email', isNotEqualTo: FirebaseAuth.instance.currentUser!.email);
 
-        // Filter current user out in memory
-        _searchResults =
-            querySnapshot.docs
-                .where(
-                  (doc) =>
-                      (doc.data() as Map<String, dynamic>)['uid'] !=
-                      currentUserId,
-                )
-                .toList();
-      } else {
-        // Search for users by first name
-        querySnapshot =
-            await _firestore
-                .collection('users')
-                .where('firstName', isGreaterThanOrEqualTo: searchText)
-                .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff')
-                .get();
-
-        // Filter current user out in memory
-        _searchResults =
-            querySnapshot.docs
-                .where(
-                  (doc) =>
-                      (doc.data() as Map<String, dynamic>)['uid'] !=
-                      currentUserId,
-                )
-                .toList();
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-    } catch (error) {
-      print('Error searching users: $error');
-      setState(() {
-        _isLoading = false;
-      });
+    if (searchText.isNotEmpty) {
+      query = query
+          .where('firstName', isGreaterThanOrEqualTo: searchText)
+          .where('firstName', isLessThanOrEqualTo: searchText + '\uf8ff');
     }
+
+    QuerySnapshot querySnapshot = await query.get();
+
+    setState(() {
+      _searchResults = querySnapshot.docs;
+      _isLoading = false;
+    });
+  } catch (error) {
+    print('Error searching users: $error');
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
