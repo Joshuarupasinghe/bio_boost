@@ -6,7 +6,7 @@ import '../services/chat_service.dart';
 import 'user_search.dart';
 
 class ChatList extends StatefulWidget {
-  const ChatList({Key? key}) : super(key: key);
+  const ChatList({super.key});
 
   @override
   _ChatListState createState() => _ChatListState();
@@ -14,6 +14,7 @@ class ChatList extends StatefulWidget {
 
 class _ChatListState extends State<ChatList> {
   final ChatService _chatService = ChatService();
+  final String currentUserId = ChatService().currentUserId;
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -71,12 +72,30 @@ class _ChatListState extends State<ChatList> {
             itemBuilder: (context, index) {
               final chatRoom = chatRooms[index].data() as Map<String, dynamic>;
               final chatRoomId = chatRooms[index].id;
-              final participants = List<String>.from(chatRoom['participants']);
+              final participants =
+                  chatRoom['participants'] != null
+                      ? List<String>.from(chatRoom['participants'])
+                      : [];
 
               // Get the other user's ID (not the current user)
-              final otherUserId = participants.firstWhere(
-                (id) => id != _chatService.currentUserId,
-              );
+              final otherUserId =
+                  participants.isNotEmpty
+                      ? participants.firstWhere(
+                        (id) => id != _chatService.currentUserId,
+                        orElse: () => '',
+                      )
+                      : '';
+
+              final unreadCount =
+                  chatRoom.containsKey('unreadCounts') &&
+                          chatRoom['unreadCounts'][_chatService.currentUserId] != null
+                      ? chatRoom['unreadCounts'][_chatService.currentUserId]
+                      : 0;
+
+              if (!chatRoom.containsKey('participants') ||
+                  chatRoom['participants'] == null) {
+                return SizedBox.shrink(); // Skip this chat room if data is invalid
+              }
 
               // Use FutureBuilder to get the other user's details
               return FutureBuilder<Map<String, dynamic>>(
@@ -103,9 +122,6 @@ class _ChatListState extends State<ChatList> {
                         DateTime.now().millisecondsSinceEpoch,
                   );
 
-                  // Here you could add logic to calculate unread messages
-                  final unreadCount = 0; // Placeholder for unread message count
-
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.teal,
@@ -117,13 +133,23 @@ class _ChatListState extends State<ChatList> {
                     title: Text(
                       name,
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                         color: Colors.white,
                       ),
                     ),
                     subtitle: Text(
                       lastMessage,
-                      style: TextStyle(color: Colors.grey[400]),
+                      style: TextStyle(
+                        color:
+                            unreadCount > 0 ? Colors.white : Colors.grey[400],
+                        fontWeight:
+                            unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -158,6 +184,10 @@ class _ChatListState extends State<ChatList> {
                       ],
                     ),
                     onTap: () {
+                      _chatService.markMessagesAsRead(
+                        chatRoomId,
+                        _chatService.currentUserId,
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(

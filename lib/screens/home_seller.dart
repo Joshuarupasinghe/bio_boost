@@ -1,7 +1,10 @@
 import 'package:bio_boost/screens/benefits.dart';
+import 'package:bio_boost/screens/create_sales01.dart';
 import 'package:bio_boost/screens/wanted_sales.dart';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/services/service_request_service.dart';
+import 'package:bio_boost/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
 class SellerHomePage extends StatefulWidget {
@@ -14,18 +17,55 @@ class SellerHomePage extends StatefulWidget {
 class _SellerHomePageState extends State<SellerHomePage> {
   final ServiceRequestService _serviceRequestService = ServiceRequestService();
   List<Map<String, dynamic>> _serviceRequests = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   bool _isLoading = true;
+  String? _errorMessage;
+  String? _userRole;
 
   final List<Map<String, String>> categories = [
-    {'title': 'Paddy Husk & Straw'},
-    {'title': 'Coconut Husks and Shells'},
-    {'title': 'Tea Waste'}
+    {'title': 'Paddy Husk & Straw', 'url': 'images/Paddy Husk & Straw.jpg'},
+    {
+      'title': 'Coconut Husks & Shells',
+      'url': 'images/Coconut Husks & Shells.jpg',
+    },
+    {'title': 'Tea Waste', 'url': 'images/Tea Waste.jpg'},
   ];
 
   @override
   void initState() {
     super.initState();
     _fetchServiceRequests();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        String? role = await _authService.getUserRole(user.uid);
+        setState(() {
+          _userRole = role;
+          _isLoading = false;
+        });
+
+        if (role != 'Seller') {
+          setState(() {
+            _errorMessage = 'You do not have permission to access this page.';
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No user is signed in.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to check user role: $e';
+      });
+    }
   }
 
   Future<void> _fetchServiceRequests() async {
@@ -45,81 +85,135 @@ class _SellerHomePageState extends State<SellerHomePage> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
 
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(
+          title: const Text("Home", style: TextStyle(color: Colors.white)),
+          centerTitle: true,
+          backgroundColor: Colors.grey[900],
+          elevation: 0,
+        ),
+        body: Center(
+          child: Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildHeader(),
-            SizedBox(height: 20.0),
-            SizedBox(
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1,
-                ),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 80,
-                          color: Colors.white,
-                          child: const Center(
-                            child: Text(
-                              'Image Of the type of Agri waste',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 10),
+    if (_userRole != 'Seller') {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(
+          title: const Text(
+            "Access Denied",
+            style: TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.grey[900],
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text(
+            "You do not have permission to access this page.",
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              _buildHeader(),
+              SizedBox(height: 20.0),
+              SizedBox(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreateSales01(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[850],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              child: Center(
+                                child: Image.asset(
+                                  categories[index]['url']!,
+                                  height: 50,
+                                  width: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 3),
+                            Text(
+                              categories[index]['title']!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          categories[index]['title']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            _buildDivider(),
-            _buildRecentWantedSales(),
-            _buildSeeMoreButton(),
-            _buildDivider(),
-            _buildBenefitsHeader(),
-            _buildBenefitsList(),
-          ],
+              _buildDivider(),
+              _buildRecentWantedSales(),
+              _buildSeeMoreButton(),
+              _buildDivider(),
+              _buildBenefitsHeader(),
+              _buildBenefitsList(),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 
   Widget _buildHeader() {
     return Row(
@@ -136,7 +230,7 @@ Widget build(BuildContext context) {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => WantedPage()),
+                  MaterialPageRoute(builder: (context) => CreateSales01()),
                 );
               },
               child: Text(

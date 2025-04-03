@@ -61,7 +61,7 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
               children: [
                 // Title
                 Text(
-                  "Add My Services",
+                  "Add My Needs",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -199,6 +199,8 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
       
       // Show success message
       _showSuccessToast("Service request posted successfully");
+      Navigator.pop(context, true); // Indicating success
+
       
       // Clear form without navigation
       setState(() {
