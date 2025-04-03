@@ -166,23 +166,43 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                         ),
                       ],
                     ),
+                    // In UserSearchScreen.dart, modify the onTap function:
                     onTap: () async {
-                      final chatService = ChatService();
-                      final chatRoomId = await chatService.createChatRoom(
-                        userId,
-                      );
+                      try {
+                        final chatService = ChatService();
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => ChatDetailScreen(
-                                name: '$firstName $lastName',
-                                avatar: initials,
-                                userId: userId,
-                              ),
-                        ),
-                      );
+                        // Use either the document ID or the uid field, whichever is correct
+                        final userId =
+                            _searchResults[index].id;
+
+                        final chatRoomId = await chatService.createChatRoom(userId);
+
+                        if (chatRoomId.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ChatDetailScreen(
+                                    name: '$firstName $lastName',
+                                    avatar: initials,
+                                    userId: userId,
+                                  ),
+                            ),
+                          );
+                        } else {
+                          // Show error if chat room creation returned empty ID
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to create chat room'),
+                            ),
+                          );
+                        }
+                      } catch (error) {
+                        print('Error creating chat room: $error');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $error')),
+                        );
+                      }
                     },
                   );
                 },

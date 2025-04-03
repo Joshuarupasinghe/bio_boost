@@ -10,23 +10,38 @@ class ChatService {
 
   // Create or get a chat room between two users
   Future<String> createChatRoom(String otherUserId) async {
-    // Sort IDs to ensure consistent chat room IDs
-    final List<String> ids = [currentUserId, otherUserId]..sort();
-    final String chatRoomId = ids.join('_');
-    
-    // Check if the chat room already exists
-    final chatRoomDoc = await _firestore.collection('chatRooms').doc(chatRoomId).get();
-    
-    if (!chatRoomDoc.exists) {
-      // Create new chat room
-      await _firestore.collection('chatRooms').doc(chatRoomId).set({
-        'participants': ids,
-        'lastMessageTime': DateTime.now().millisecondsSinceEpoch,
-        'lastMessage': '',
-      });
+    try {
+      // Sort IDs to ensure consistent chat room IDs
+      final List<String> ids = [currentUserId, otherUserId]..sort();
+      final String chatRoomId = ids.join('_');
+      
+      // Check if the chat room already exists
+      final chatRoomDoc = await _firestore.collection('chatRooms').doc(chatRoomId).get();
+      
+      if (!chatRoomDoc.exists) {
+        // Verify both users exist before creating chat room
+        final currentUserDoc = await _firestore.collection('users').doc(currentUserId).get();
+        final otherUserDoc = await _firestore.collection('users').doc(otherUserId).get();
+        
+        if (!currentUserDoc.exists || !otherUserDoc.exists) {
+          print('One of the users does not exist: currentUser=${currentUserDoc.exists}, otherUser=${otherUserDoc.exists}');
+          return '';
+        }
+        
+        // Create new chat room
+        await _firestore.collection('chatRooms').doc(chatRoomId).set({
+          'participants': ids,
+          'lastMessageTime': DateTime.now().millisecondsSinceEpoch,
+          'lastMessage': '',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      return chatRoomId;
+    } catch (error) {
+      print('Error in createChatRoom: $error');
+      return '';
     }
-    
-    return chatRoomId;
   }
   
   // Send a message
