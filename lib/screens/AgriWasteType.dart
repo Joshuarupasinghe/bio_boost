@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AgriWasteTypePage extends StatefulWidget {
+  final String? selectedCategory;
+
+  const AgriWasteTypePage({super.key, this.selectedCategory});
+
   @override
   _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
 }
@@ -9,6 +13,12 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
   String? selectedDistrict;
   String? selectedCity;
   String? selectedWasteType;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedWasteType = widget.selectedCategory; // Set the initial value
+  }
 
   List<String> districts = [
     "Colombo",
@@ -169,6 +179,7 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       backgroundColor: Colors.grey[900],
       body: Padding(
         padding: EdgeInsets.all(10),
@@ -236,11 +247,11 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
 
                   ElevatedButton(
                     onPressed: () {},
-                    child: Text("Filter"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
                     ),
+                    child: Text("Filter"),
                   ),
                 ],
               ),
