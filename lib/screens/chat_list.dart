@@ -6,7 +6,7 @@ import '../services/chat_service.dart';
 import 'user_search.dart';
 
 class ChatList extends StatefulWidget {
-  const ChatList({Key? key}) : super(key: key);
+  const ChatList({super.key});
 
   @override
   _ChatListState createState() => _ChatListState();

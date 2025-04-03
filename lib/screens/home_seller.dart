@@ -1,4 +1,5 @@
 import 'package:bio_boost/screens/benefits.dart';
+import 'package:bio_boost/screens/create_sales01.dart';
 import 'package:bio_boost/screens/wanted_sales.dart';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/services/service_request_service.dart';
@@ -17,9 +18,12 @@ class _SellerHomePageState extends State<SellerHomePage> {
   bool _isLoading = true;
 
   final List<Map<String, String>> categories = [
-    {'title': 'Paddy Husk & Straw'},
-    {'title': 'Coconut Husks and Shells'},
-    {'title': 'Tea Waste'}
+    {'title': 'Paddy Husk & Straw', 'url': 'images/Paddy Husk & Straw.jpg'},
+    {
+      'title': 'Coconut Husks & Shells',
+      'url': 'images/Coconut Husks & Shells.jpg',
+    },
+    {'title': 'Tea Waste', 'url': 'images/Tea Waste.jpg'},
   ];
 
   @override
@@ -45,81 +49,85 @@ class _SellerHomePageState extends State<SellerHomePage> {
     }
   }
 
-
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildHeader(),
-            SizedBox(height: 20.0),
-            SizedBox(
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1,
-                ),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 80,
-                          color: Colors.white,
-                          child: const Center(
-                            child: Text(
-                              'Image Of the type of Agri waste',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 10),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              _buildHeader(),
+              SizedBox(height: 20.0),
+              SizedBox(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreateSales01(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[850],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              child: Center(
+                                child: Image.asset(
+                                  categories[index]['url']!,
+                                  height: 50,
+                                  width: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 3),
+                            Text(
+                              categories[index]['title']!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          categories[index]['title']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            _buildDivider(),
-            _buildRecentWantedSales(),
-            _buildSeeMoreButton(),
-            _buildDivider(),
-            _buildBenefitsHeader(),
-            _buildBenefitsList(),
-          ],
+              _buildDivider(),
+              _buildRecentWantedSales(),
+              _buildSeeMoreButton(),
+              _buildDivider(),
+              _buildBenefitsHeader(),
+              _buildBenefitsList(),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 
   Widget _buildHeader() {
     return Row(
@@ -136,7 +144,7 @@ Widget build(BuildContext context) {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => WantedPage()),
+                  MaterialPageRoute(builder: (context) => CreateSales01()),
                 );
               },
               child: Text(
