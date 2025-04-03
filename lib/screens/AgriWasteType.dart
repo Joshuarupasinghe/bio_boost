@@ -1,27 +1,37 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/screens/detail.dart';
+import 'package:flutter/material.dart';
+import 'package:bio_boost/data/sales_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AgriWasteTypePage extends StatefulWidget {
+class SalesListScreen extends StatefulWidget {
+  const SalesListScreen({super.key});
+
+
   @override
-  _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
+  _SalesListScreenState createState() => _SalesListScreenState();
 }
 
-class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  User? _currentUser;
+
+class _SalesListScreenState extends State<SalesListScreen> {
+  late Future<List<Sales>> _salesFuture;
+  final SalesService _salesService = SalesService();
+  String? _currentUserId;
+
 
   @override
   void initState() {
     super.initState();
-    _getCurrentUser();
+
+    _loadCurrentUser();
+    _salesFuture = _salesService.getSalesDetails();
   }
 
-  void _getCurrentUser() {
+  Future<void> _loadCurrentUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentUser = _auth.currentUser;
+      _currentUserId = prefs.getString('currentUserId') ?? 'defaultUser';
+
     });
   }
 
@@ -34,56 +44,43 @@ class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        title: Text("Agri Waste Type"),
-        backgroundColor: Colors.black,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection("agri_waste_data").snapshots(),
+
+      appBar: AppBar(title: const Text('Agricultural Waste Sales')),
+      body: FutureBuilder<List<Sales>>(
+        future: _salesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Text(
-                "No data available",
-                style: TextStyle(color: Colors.white),
-              ),
-            );
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No sales available"));
           }
 
-          final data = snapshot.data!.docs;
+          final salesList = snapshot.data!;
+
           return ListView.builder(
-            itemCount: data.length,
+            itemCount: salesList.length,
             itemBuilder: (context, index) {
-              var doc = data[index];
+              final sale = salesList[index];
               return Card(
-                color: Colors.grey[800],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                margin: const EdgeInsets.all(8),
                 child: ListTile(
-                  title: Text(
-                    "Waste Type: ${doc["wasteType"]}",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    "Location: ${doc["city"]}, ${doc["district"]}",
-                    style: TextStyle(color: Colors.white54),
-                  ),
+                  title: Text(sale.s_type),
+                  subtitle: Text("Price: ${sale.s_price}"),
+                  trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => AgriWasteDetailPage(
-                              currentUser: _currentUser!,
-                              saleId: doc.id, // Pass the sales document ID
-                            ),
-                      ),
-                    );
+                    if (_currentUserId != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AgriWasteDetailPage(
+                            saleId: sale.documentId,
+                            currentUserId: _currentUserId!, // Pass current user ID
+                          ),
+                        ),
+                      );
+                    }
+
                   },
                 ),
               );
