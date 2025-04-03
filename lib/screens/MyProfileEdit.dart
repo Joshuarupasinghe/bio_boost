@@ -20,7 +20,7 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   final picker = ImagePicker();
   // Initialize the seller profile service
   final SellerProfileService _profileService = SellerProfileService();
-  bool _isLoading = true;
+  final bool _isLoading = true;
 
   File? _profileImage;
   String? _downloadUrl;

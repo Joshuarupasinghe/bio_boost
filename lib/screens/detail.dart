@@ -3,7 +3,6 @@ import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/data/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
 
