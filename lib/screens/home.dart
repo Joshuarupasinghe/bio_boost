@@ -92,32 +92,6 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () {},
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.info, color: Colors.white),
-                      label: Text(
-                        'Benefits',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BenefitsPage(),
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
                 toolbarHeight: 60,
