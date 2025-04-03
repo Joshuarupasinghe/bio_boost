@@ -3,11 +3,17 @@ import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/data/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
-  final String saleId;
+  final User currentUser; // Accept currentUser
+  final String saleId; // Accept saleId
 
-  const AgriWasteDetailPage({super.key, required this.saleId});
+  const AgriWasteDetailPage({
+    super.key,
+    required this.currentUser,
+    required this.saleId,
+  });
 
   @override
   _AgriWasteDetailPageState createState() => _AgriWasteDetailPageState();
@@ -45,6 +51,14 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Added to Wishlist")));
     }
+  }
+
+  // Contact button action
+  void _contactSeller(Sales agriWaste) {
+    // Pass both currentUser and agriWaste details to whatever contact functionality you want
+    print(
+      "Contacting seller ${agriWaste.s_ownerName} for ${agriWaste.s_type}.",
+    );
   }
 
   @override
@@ -175,24 +189,6 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                           ),
                         ),
                       ),
-
-                      // Fill remaining spaces if less than 4 other images
-                      if (agriWaste.s_otherImages.length < 4)
-                        ...List.generate(
-                          4 - agriWaste.s_otherImages.length,
-                          (index) => Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.image, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -208,7 +204,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _contactSeller(agriWaste),
                     icon: const Icon(Icons.phone),
                     label: const Text('Contact'),
                     style: ElevatedButton.styleFrom(

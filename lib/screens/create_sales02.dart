@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class CreateSales02 extends StatefulWidget {
   final String selectedCategory;
 
@@ -24,7 +23,8 @@ class _CreateSales02State extends State<CreateSales02> {
   final TextEditingController _ownerNameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _contactNumberController = TextEditingController();
+  final TextEditingController _contactNumberController =
+      TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -49,13 +49,12 @@ class _CreateSales02State extends State<CreateSales02> {
   final ImagePicker _picker = ImagePicker();
 
   @override
-void initState() {
-  super.initState();
-  uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-  selectedCategory = widget.selectedCategory;
-  _fetchUserData(); // Fetch user data
-}
-
+  void initState() {
+    super.initState();
+    uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    selectedCategory = widget.selectedCategory;
+    _fetchUserData(); // Fetch user data
+  }
 
   // Function to pick the main image
   Future<void> pickMainImage() async {
@@ -70,29 +69,31 @@ void initState() {
   // Function to pick sub-images (limit of 4)
   Future<void> pickSubImages() async {
     final pickedFiles = await _picker.pickMultiImage();
-    if (pickedFiles != null) {
-      setState(() {
-        _subImages = pickedFiles.take(4).map((file) => File(file.path)).toList();
-      });
-    }
+    setState(() {
+      _subImages = pickedFiles.take(4).map((file) => File(file.path)).toList();
+    });
   }
+
   Future<void> _fetchUserData() async {
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users') // Ensure this matches your Firestore collection name
-        .doc(user.uid)
-        .get();
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance
+              .collection(
+                'users',
+              ) // Ensure this matches your Firestore collection name
+              .doc(user.uid)
+              .get();
 
-    if (userDoc.exists) {
-      var userData = userDoc.data() as Map<String, dynamic>;
-      setState(() {
-        _locationController.text = "${userData['district']}, ${userData['city']}"; 
-      });
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        setState(() {
+          _locationController.text =
+              "${userData['district']}, ${userData['city']}";
+        });
+      }
     }
   }
-}
-
 
   // Function to upload images to Firebase Storage and get URLs
   Future<String> uploadImageToFirebase(File image, String imageName) async {
@@ -127,25 +128,29 @@ void initState() {
     }
 
     // Save sale data to Firestore
-    FirebaseFirestore.instance.collection('sales').add({
-      'uid': uid,
-      's_type': selectedCategory,
-      's_price': _priceController.text,
-      's_quantity': _quantityController.text,
-      's_description': _descriptionController.text,
-      's_ownerName': _ownerNameController.text,
-      's_location': _locationController.text,
-      's_address': _addressController.text,
-      's_contactNumber': _contactNumberController.text,
-      's_mainImage': mainImageUrl,
-      's_otherImages': subImageUrls,
-      'timestamp': FieldValue.serverTimestamp(),
-    }).then((_) {
-      print("Sale created successfully!");
-      Navigator.pop(context);
-    }).catchError((error) {
-      print("Error creating sale: $error");
-    });
+    FirebaseFirestore.instance
+        .collection('sales')
+        .add({
+          'uid': uid,
+          's_type': selectedCategory,
+          's_price': _priceController.text,
+          's_quantity': _quantityController.text,
+          's_description': _descriptionController.text,
+          's_ownerName': _ownerNameController.text,
+          's_location': _locationController.text,
+          's_address': _addressController.text,
+          's_contactNumber': _contactNumberController.text,
+          's_mainImage': mainImageUrl,
+          's_otherImages': subImageUrls,
+          'timestamp': FieldValue.serverTimestamp(),
+        })
+        .then((_) {
+          print("Sale created successfully!");
+          Navigator.pop(context);
+        })
+        .catchError((error) {
+          print("Error creating sale: $error");
+        });
   }
 
   // Build category dropdown field
@@ -269,9 +274,12 @@ void initState() {
             _buildImagePickerButton('Pick Sub Images (Max 4)', pickSubImages),
             _subImages.isNotEmpty
                 ? Wrap(
-                    spacing: 8,
-                    children: _subImages.map((file) => Image.network(file.path, height: 80)).toList(), // Web support
-                  )
+                  spacing: 8,
+                  children:
+                      _subImages
+                          .map((file) => Image.network(file.path, height: 80))
+                          .toList(), // Web support
+                )
                 : Container(),
 
             const SizedBox(height: 24),
