@@ -1,6 +1,7 @@
 import 'package:bio_boost/screens/become_seller.dart';
 import 'package:bio_boost/screens/wishlist.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -12,22 +13,16 @@ import 'sign_in.dart';
 
 class CompanyProfilePage extends StatefulWidget {
   const CompanyProfilePage({super.key});
-  
+
   @override
-  State<CompanyProfilePage> createState() => _CompanyProfilePageState();
+  _CompanyProfilePageState createState() => _CompanyProfilePageState();
 }
 
 class _CompanyProfilePageState extends State<CompanyProfilePage> {
-  final CompanyProfileService _profileService = CompanyProfileService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  UserModel? _userProfile;
-  List<WantedSale> _userWants = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  int _retryCount = 0;
-  final int _maxRetries = 2;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -36,646 +31,570 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
+    setState(() => isLoading = true);
     try {
-      // Manually check if user document exists and create if not
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
-        
-        if (!userDoc.exists) {
-          print("User document does not exist, creating default...");
-          // Create default user document
-          await _firestore.collection('users').doc(currentUser.uid).set({
-            'uid': currentUser.uid,
-            'firstName': 'Default',
-            'lastName': 'User',
-            'email': currentUser.email ?? 'no-email@example.com',
-            'companyName': 'Default Company',
-            'phone': '1234567890',
-            'address': 'Default Address',
-            'district': 'Default District',
-            'city': 'Default City',
-            'role': 'buyer',
+      final user = _auth.currentUser;
+      if (user != null) {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          setState(() {
+            userData = doc.data();
+            isLoading = false;
           });
         }
       }
-      
-      // Listen for user profile changes
-      _profileService.getUserProfile().listen(
-        (profile) {
-          if (mounted) {
-            setState(() {
-              _userProfile = profile;
-              _isLoading = false;
-              _errorMessage = null;
-            });
-          }
-        },
-        onError: (error) {
-          print("Error in user profile stream: $error");
-          if (mounted) {
-            setState(() {
-              _errorMessage = "Error loading profile data: $error";
-              _isLoading = false;
-            });
-          }
-          
-          // Auto-retry a few times
-          if (_retryCount < _maxRetries) {
-            _retryCount++;
-            Future.delayed(Duration(seconds: 2), _loadUserData);
-          }
-        },
-      );
-
-      // Listen for user wants changes
-      _profileService.getUserWants().listen(
-        (wants) {
-          if (mounted) {
-            setState(() {
-              _userWants = wants;
-            });
-          }
-        },
-        onError: (error) {
-          print("Error in user wants stream: $error");
-        },
-      );
     } catch (e) {
-      print("Error in loadUserData: $e");
-      if (mounted) {
-        setState(() {
-          _errorMessage = "Error: $e";
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _resetProfile() async {
-    try {
+      print('Error loading user data: $e');
       setState(() {
-        _isLoading = true;
+        isLoading = false;
       });
-      
-      // Use the service method for a more reliable reset
-      bool success = await _profileService.resetProfile(
-        customEmail: _auth.currentUser?.email
-      );
-      
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Profile has been reset successfully"))
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to reset profile. Please try again."))
-        );
-      }
-      
-      _loadUserData();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = "Error resetting profile: $e";
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e"))
-      );
     }
-  }
-
-  String _getFullName() {
-    if (_userProfile == null) return '';
-    return '${_userProfile!.firstName} ${_userProfile!.lastName}';
-  }
-
-  String _getLocation() {
-    if (_userProfile == null) return '';
-    return '${_userProfile!.city}, ${_userProfile!.district}';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (isLoading) {
       return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 20),
-              Text("Loading profile data..."),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _loadUserData,
-                child: Text("Retry"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    
-    if (_errorMessage != null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error, color: Colors.red, size: 48),
-              SizedBox(height: 20),
-              Text(
-                "Error loading profile",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(_errorMessage!),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _loadUserData,
-                child: Text("Retry"),
-              ),
-            ],
+        backgroundColor: Colors.grey[900],
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
           ),
         ),
       );
     }
 
+    if (userData == null) {
+      return const Center(
+        child: Text(
+          'Error loading profile. Please try again.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
+    print('Current user role: ${userData!['role']}');
+
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              SizedBox(height: 30),
-              CircleAvatar(
-                radius: 70,
-                backgroundColor: Colors.black,
-                child: Icon(Icons.person, size: 50, color: Colors.white),
-              ),
-              SizedBox(height: 20),
-              Text(
-                _userProfile?.companyName ?? "Company Name",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-              SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditCompanyProfilePage(userProfile: _userProfile),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey[900],
+      body: RefreshIndicator(
+        onRefresh: _loadUserData,
+        color: Colors.teal,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                CircleAvatar(
+                  radius: 70,
+                  backgroundColor: Colors.black,
+                  child: Text(
+                    (userData!['firstName']?[0] ?? '').toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 40,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text('Edit Profile'),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => WishlistPage()),
-                      );
-                    },
-                    child: Text("My Wishlist"),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "${userData!['firstName']} ${userData!['lastName']}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: Colors.white,
                   ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditCompanyProfilePage(),
+                          ),
+                        );
+                        if (result == true) {
+                          _loadUserData();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Edit Profile'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const WishlistPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text("My Wishlist"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_getFullName(), style: TextStyle(fontSize: 20)),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Icon(Icons.location_pin),
-                          SizedBox(width: 5),
-                          Text(
-                            _getLocation(),
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
+                      _buildInfoRow(Icons.business, userData!['companyName'] ?? 'N/A'),
+                      const SizedBox(height: 15),
+                      _buildInfoRow(
+                        Icons.location_pin,
+                        "${userData!['city']}, ${userData!['district']}",
                       ),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Icon(Icons.call),
-                          SizedBox(width: 5),
-                          Text(_userProfile?.phone ?? "No phone", style: TextStyle(fontSize: 20)),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Icon(Icons.email),
-                          SizedBox(width: 5),
-                          Text(
-                            _userProfile?.email ?? "No email",
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
+                      const SizedBox(height: 15),
+                      _buildInfoRow(Icons.call, userData!['phoneNumber'] ?? 'N/A'),
+                      const SizedBox(height: 15),
+                      _buildInfoRow(Icons.email, userData!['email'] ?? 'N/A'),
                     ],
                   ),
                 ),
-              ),
-              SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BecomeSellerPage(),
+                const SizedBox(height: 30),
+                if (userData!['role'] == 'Buyer')
+                  ElevatedButton(
+                    onPressed: () async {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BecomeSellerPage(),
+                        ),
+                      ).then((result) async {
+                        if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+                          // Reload user data
+                          await _loadUserData();
+                          
+                          if (!mounted) return;
+
+                          // Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Successfully became a seller!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+
+                          // Navigate to home
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/home',
+                            (route) => false,
+                            arguments: {'userRole': 'Seller'},
+                          );
+                        }
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 15,
                       ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "Become a Seller",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _auth.signOut();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SignInPage()),
+                      (route) => false,
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Colors.red[700],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: Text("Become a Seller"),
+                  child: const Text(
+                    "Logout",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "My Wants",
-                    style: TextStyle(color: Colors.white, fontSize: 22),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AddWantScreen()),
-                      );
-                    },
-                    icon: Icon(Icons.add),
-                    label: Text("Add Want"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              _userWants.isEmpty
-                  ? Text("You haven't added any wants yet", style: TextStyle(color: Colors.white70))
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _userWants.length,
-                      itemBuilder: (context, index) {
-                        final want = _userWants[index];
-                        return _buildWantedCard(
-                          agriWasteType: want.name,
-                          name: _getFullName(),
-                          location: want.location,
-                          weight: "${want.weight}kg",
-                          description: want.description,
-                          onDelete: () async {
-                            await _profileService.deleteUserWant(want.id);
-                          },
-                        );
-                      },
-                    ),
-              SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SignInPage()),
-                        (route) => false, // Remove all routes
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                    child: Text("Logout", style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildWantedCard({
-    required String agriWasteType,
-    required String name,
-    required String location,
-    required String weight,
-    required String description,
-    required VoidCallback onDelete,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[850],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black,
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white, size: 24),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(width: 10),
-
-          // Text Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Needs $agriWasteType",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text("Name: $name", style: TextStyle(color: Colors.white)),
-                Text(
-                  "Location: $location",
-                  style: TextStyle(color: Colors.white),
-                ),
-                Text("Weight: $weight", style: TextStyle(color: Colors.white)),
-                Text(description, style: TextStyle(color: Colors.white70)),
-              ],
-            ),
-          ),
-
-          // Delete Icon
-          GestureDetector(
-            onTap: onDelete,
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class EditCompanyProfilePage extends StatefulWidget {
-  final UserModel? userProfile;
-
-  const EditCompanyProfilePage({super.key, this.userProfile});
+  const EditCompanyProfilePage({super.key});
 
   @override
-  State<EditCompanyProfilePage> createState() => _EditCompanyProfilePageState();
+  _EditCompanyProfilePageState createState() => _EditCompanyProfilePageState();
 }
 
 class _EditCompanyProfilePageState extends State<EditCompanyProfilePage> {
-  final CompanyProfileService _profileService = CompanyProfileService();
-  final _formKey = GlobalKey<FormState>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _phoneController;
-  late TextEditingController _companyNameController;
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
   
-  String? _selectedCity;
-  String? _selectedDistrict;
-  bool _isLoading = false;
-  
-  final List<String> _locations = ['Colombo', 'Pitipana', 'Kandy', 'Galle', 'Jaffna'];
+  String? selectedProvince;
+  String? selectedDistrict;
+  bool isLoading = true;
+  Map<String, dynamic>? userData;
+
+  // Province and District Data
+  final Map<String, List<String>> provinceDistricts = {
+    'Western Province': ['Colombo', 'Gampaha', 'Kalutara'],
+    'Central Province': ['Kandy', 'Matale', 'Nuwara Eliya'],
+    'Southern Province': ['Galle', 'Matara', 'Hambantota'],
+    'Northern Province': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
+    'Eastern Province': ['Trincomalee', 'Batticaloa', 'Ampara'],
+    'North Western Province': ['Kurunegala', 'Puttalam'],
+    'North Central Province': ['Anuradhapura', 'Polonnaruwa'],
+    'Uva Province': ['Badulla', 'Monaragala'],
+    'Sabaragamuwa Province': ['Ratnapura', 'Kegalle']
+  };
+
+  // Find province for a given district
+  String? findProvinceForDistrict(String district) {
+    for (var entry in provinceDistricts.entries) {
+      if (entry.value.contains(district)) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.userProfile?.firstName ?? 'Default');
-    _lastNameController = TextEditingController(text: widget.userProfile?.lastName ?? 'User');
-    _phoneController = TextEditingController(text: widget.userProfile?.phone ?? '1234567890');
-    _companyNameController = TextEditingController(text: widget.userProfile?.companyName ?? 'Default Company');
-    _selectedCity = widget.userProfile?.city ?? _locations.first;
-    _selectedDistrict = widget.userProfile?.district ?? _locations.last;
+    _loadUserData();
   }
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _phoneController.dispose();
-    _companyNameController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    phoneNumberController.dispose();
+    emailController.dispose();
+    addressController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadUserData() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            userData = data;
+            firstNameController.text = data['firstName'] ?? '';
+            lastNameController.text = data['lastName'] ?? '';
+            phoneNumberController.text = data['phoneNumber'] ?? '';
+            emailController.text = data['email'] ?? '';
+            addressController.text = data['address'] ?? '';
+            
+            // Load province and district
+            String? storedDistrict = data['district'] as String?;
+            String? storedCity = data['city'] as String?;
+            
+            if (storedCity != null) {
+              // Find the province that contains the stored city
+              for (var entry in provinceDistricts.entries) {
+                if (entry.value.contains(storedCity)) {
+                  selectedProvince = entry.key;
+                  selectedDistrict = storedCity;
+                  break;
+                }
+              }
+            }
+            
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> _updateProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-    
-    setState(() {
-      _isLoading = true;
-    });
-    
-    final success = await _profileService.updateUserProfile(
-      firstName: _firstNameController.text,
-      lastName: _lastNameController.text,
-      phone: _phoneController.text,
-      city: _selectedCity,
-      district: _selectedDistrict,
-      companyName: _companyNameController.text,
-    );
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    if (success) {
-      // Show success snackbar
+    if (firstNameController.text.isEmpty || 
+        lastNameController.text.isEmpty || 
+        phoneNumberController.text.isEmpty ||
+        addressController.text.isEmpty ||
+        selectedProvince == null ||
+        selectedDistrict == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile updated successfully")),
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
       );
-      Navigator.pop(context);
-    } else {
-      // Show error snackbar
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final Map<String, dynamic> updateData = {
+          'firstName': firstNameController.text.trim(),
+          'lastName': lastNameController.text.trim(),
+          'phoneNumber': phoneNumberController.text.trim(),
+          'address': addressController.text.trim(),
+          'district': selectedProvince,
+          'city': selectedDistrict,
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        await _firestore.collection('users').doc(user.uid).update(updateData);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update profile")),
+        SnackBar(
+          content: Text('Error updating profile: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: Text('Edit Profile'),
-        backgroundColor: Colors.grey[800],
+        title: const Text('Edit Profile'),
+        backgroundColor: Colors.grey[850],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile Picture
-                    Center(
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey[400],
-                        child: Icon(Icons.edit, size: 30),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    // User Name
-                    Center(
-                      child: Text(
-                        widget.userProfile?.companyName ?? 'Company Name',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    
-                    // Company Name Field
-                    Text('Company Name'),
-                    TextFormField(
-                      controller: _companyNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Company Name',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter company name';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 10),
-                    
-                    // Name Fields
-                    Text('Name'),
-                    TextFormField(
-                      controller: _firstNameController,
-                      decoration: InputDecoration(
-                        labelText: 'First Name',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
-                    ),
-                    TextFormField(
-                      controller: _lastNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Last Name',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your last name';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 10),
-                    // Location Dropdowns
-                    Text('Location'),
-                    DropdownButtonFormField<String>(
-                      value: _selectedCity,
-                      items: _locations
-                          .map(
-                            (location) => DropdownMenuItem(
-                              value: location,
-                              child: Text(location),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedCity = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'City',
-                      ),
-                    ),
-                    DropdownButtonFormField<String>(
-                      value: _selectedDistrict,
-                      items: _locations
-                          .map(
-                            (location) => DropdownMenuItem(
-                              value: location,
-                              child: Text(location),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedDistrict = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'District',
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    // Contact Fields
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: InputDecoration(
-                        labelText: 'Contact Number',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-                    // Update Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _updateProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                        ),
-                        child: Text('Update Profile'),
-                      ),
-                    ),
-                  ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey[800],
+                child: Text(
+                  (firstNameController.text.isNotEmpty ? firstNameController.text[0] : '').toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 40,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 30),
+            _buildTextField('First Name', firstNameController),
+            const SizedBox(height: 15),
+            _buildTextField('Last Name', lastNameController),
+            const SizedBox(height: 15),
+            _buildTextField('Phone Number', phoneNumberController),
+            const SizedBox(height: 15),
+            _buildTextField('Address', addressController),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[700]!),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedProvince,
+                  isExpanded: true,
+                  dropdownColor: Colors.grey[850],
+                  hint: const Text('Select Province', style: TextStyle(color: Colors.white70)),
+                  style: const TextStyle(color: Colors.white),
+                  items: provinceDistricts.keys.map((String province) {
+                    return DropdownMenuItem<String>(
+                      value: province,
+                      child: Text(province),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedProvince = newValue;
+                      selectedDistrict = null;  // Reset district when province changes
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[700]!),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedDistrict,
+                  isExpanded: true,
+                  dropdownColor: Colors.grey[850],
+                  hint: const Text('Select District', style: TextStyle(color: Colors.white70)),
+                  style: const TextStyle(color: Colors.white),
+                  items: selectedProvince != null
+                      ? provinceDistricts[selectedProvince]!.map((String district) {
+                          return DropdownMenuItem<String>(
+                            value: district,
+                            child: Text(district),
+                          );
+                        }).toList()
+                      : <DropdownMenuItem<String>>[],
+                  onChanged: selectedProvince == null ? null : (String? newValue) {
+                    setState(() {
+                      selectedDistrict = newValue;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _updateProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Update Profile',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[700]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.teal),
+        ),
+        filled: true,
+        fillColor: Colors.grey[850],
+      ),
     );
   }
 }
