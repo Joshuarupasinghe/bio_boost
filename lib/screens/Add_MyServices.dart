@@ -35,7 +35,6 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
 
   @override
   void dispose() {
-    // Dispose controllers to prevent memory leaks
     nameController.dispose();
     locationController.dispose();
     weightController.dispose();
@@ -59,9 +58,8 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Title
                 Text(
-                  "Add My Services",
+                  "Add My Needs",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -71,22 +69,23 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
                 ),
                 SizedBox(height: 12),
       
-                // Name Input
                 buildLabel("Name"),
                 buildTextField(nameController, "Enter your name", Icons.person),
                 SizedBox(height: 12),
       
-                // Location Input
                 buildLabel("Location"),
                 buildTextField(locationController, "Enter your location", Icons.location_on),
                 SizedBox(height: 12),
       
-                // Dropdown Field
                 buildLabel("What Do You Need?"),
                 DropdownButtonFormField<String>(
                   decoration: buildInputDecoration(),
                   dropdownColor: Colors.grey[800],
                   value: selectedService,
+                  hint: Text(
+                    "Select an option",
+                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                  ),
                   items: services.map((String service) {
                     return DropdownMenuItem<String>(
                       value: service,
@@ -105,19 +104,15 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
                 ),
                 SizedBox(height: 12),
       
-                // Weight Input
                 buildLabel("Weight"),
                 buildTextField(weightController, "Enter weight (kg)", Icons.scale),
-      
                 SizedBox(height: 12),
       
-                // Description Input
                 buildLabel("Explain what you need (briefly)"),
                 buildTextField(descriptionController, "Enter description", Icons.edit, maxLines: 2),
       
                 SizedBox(height: 16),
       
-                // Submit Button
                 GestureDetector(
                   onTap: _isLoading ? null : _submitServiceRequest,
                   child: Container(
@@ -150,7 +145,6 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
   }
 
   Future<void> _submitServiceRequest() async {
-    // Validate form fields
     if (nameController.text.isEmpty) {
       _showErrorToast("Please enter your name");
       return;
@@ -182,13 +176,11 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
       return;
     }
     
-    // Submit form
     setState(() {
       _isLoading = true;
     });
     
     try {
-      // Use the service to add the service request
       await _serviceRequestService.addServiceRequest(
         selectedService!,
         weight,
@@ -197,10 +189,9 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
         locationController.text
       );
       
-      // Show success message
       _showSuccessToast("Service request posted successfully");
-      
-      // Clear form without navigation
+      Navigator.pop(context, true);
+
       setState(() {
         selectedService = null;
         nameController.clear();
