@@ -2,7 +2,6 @@ import 'package:bio_boost/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String name;
@@ -10,11 +9,11 @@ class ChatDetailScreen extends StatefulWidget {
   final String userId; // Add this to store the user ID of the chat partner
 
   const ChatDetailScreen({
-    Key? key,
+    super.key,
     required this.name,
     required this.avatar,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
@@ -81,7 +80,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             SizedBox(width: 10),
             Expanded(
-              // Add this Expanded widget
               child: Text(
                 widget.name,
                 style: TextStyle(fontWeight: FontWeight.bold),
