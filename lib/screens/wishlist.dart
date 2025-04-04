@@ -16,6 +16,8 @@ class _WishlistPageState extends State<WishlistPage> {
   List<Map<String, dynamic>> _wishlist = [];
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
+  final SalesService _salesService = SalesService();
+  String? _currentUserId;
   bool _isLoading = true;
   String? _errorMessage;
   String? _userRole;
@@ -25,6 +27,7 @@ class _WishlistPageState extends State<WishlistPage> {
     super.initState();
     _loadWishlist();
     _checkUserRole();
+    _loadCurrentUser();
   }
 
   Future<void> _checkUserRole() async {
@@ -54,6 +57,13 @@ class _WishlistPageState extends State<WishlistPage> {
         _errorMessage = 'Failed to check user role: $e';
       });
     }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentUserId = prefs.getString('currentUserId') ?? 'defaultUser';
+    });
   }
 
   Future<void> _loadWishlist() async {

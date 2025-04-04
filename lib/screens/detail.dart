@@ -45,6 +45,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
       'image': agriWaste.imageUrls.isNotEmpty ? agriWaste.imageUrls[0] : '',
     });
 
+    // Check if the sale is already in the wishlist
     if (!wishlist.contains(saleJson)) {
       wishlist.add(saleJson);
       await prefs.setStringList('wishlist', wishlist);
@@ -55,9 +56,9 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Already in Wishlist")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Already in Wishlist")));
     }
   }
 
