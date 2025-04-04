@@ -15,7 +15,6 @@ class _CreateSales01State extends State<CreateSales01> {
   final AuthService _authService = AuthService();
   bool _isLoading = true;
   String? _errorMessage;
-  String? _userRole;
 
   @override
   void initState() {
@@ -29,7 +28,6 @@ class _CreateSales01State extends State<CreateSales01> {
       if (user != null) {
         String? role = await _authService.getUserRole(user.uid);
         setState(() {
-          _userRole = role;
           _isLoading = false;
         });
 

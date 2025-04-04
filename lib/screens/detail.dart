@@ -1,8 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/services/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:bio_boost/screens/chat_detail.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
@@ -44,6 +45,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
       'image': agriWaste.imageUrls.isNotEmpty ? agriWaste.imageUrls[0] : '',
     });
 
+    // Check if the sale is already in the wishlist
     if (!wishlist.contains(saleJson)) {
       wishlist.add(saleJson);
       await prefs.setStringList('wishlist', wishlist);
@@ -64,15 +66,13 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => ChatDetailScreen(
-              name: agriWaste.ownerName,
-              avatar:
-                  agriWaste.ownerName.isNotEmpty
-                      ? agriWaste.ownerName.substring(0, 1).toUpperCase()
-                      : 'S',
-              userId: agriWaste.ownerId,
-            ),
+        builder: (context) => ChatDetailScreen(
+          name: agriWaste.ownerName,
+          avatar: agriWaste.ownerName.isNotEmpty
+              ? agriWaste.ownerName.substring(0, 1).toUpperCase()
+              : 'S',
+          userId: agriWaste.ownerId,
+        ),
       ),
     );
   }
@@ -94,7 +94,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
               child: CircularProgressIndicator(color: Colors.teal),
             );
           }
-
+          
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -103,7 +103,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
               ),
             );
           }
-
+          
           if (!snapshot.hasData) {
             return const Center(
               child: Text(
@@ -130,27 +130,25 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child:
-                        agriWaste.imageUrls.isNotEmpty
-                            ? Image.network(
-                              agriWaste.imageUrls[_selectedImageIndex],
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => Center(
-                                    child: Icon(
-                                      Icons.image_not_supported,
-                                      color: Colors.grey[400],
-                                      size: 50,
-                                    ),
-                                  ),
-                            )
-                            : Center(
+                    child: agriWaste.imageUrls.isNotEmpty
+                        ? Image.file(
+                            File(agriWaste.imageUrls[_selectedImageIndex]),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Center(
                               child: Icon(
                                 Icons.image_not_supported,
                                 color: Colors.grey[400],
                                 size: 50,
                               ),
                             ),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey[400],
+                              size: 50,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -162,43 +160,35 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: agriWaste.imageUrls.length,
-                      itemBuilder:
-                          (context, index) => GestureDetector(
-                            onTap:
-                                () =>
-                                    setState(() => _selectedImageIndex = index),
-                            child: Container(
-                              width: 80,
-                              margin: EdgeInsets.only(
-                                right:
-                                    index == agriWaste.imageUrls.length - 1
-                                        ? 0
-                                        : 8,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color:
-                                      _selectedImageIndex == index
-                                          ? Colors.teal
-                                          : Colors.grey[700]!,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.network(
-                                  agriWaste.imageUrls[index],
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (_, __, ___) => Container(
-                                        color: Colors.grey[800],
-                                        child: const Icon(Icons.image),
-                                      ),
-                                ),
+                      itemBuilder: (context, index) => GestureDetector(
+                        onTap: () => setState(() => _selectedImageIndex = index),
+                        child: Container(
+                          width: 80,
+                          margin: EdgeInsets.only(
+                            right: index == agriWaste.imageUrls.length - 1 ? 0 : 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: _selectedImageIndex == index
+                                  ? Colors.teal
+                                  : Colors.grey[700]!,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(
+                              File(agriWaste.imageUrls[index]),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(Icons.image),
                               ),
                             ),
                           ),
+                        ),
+                      ),
                     ),
                   ),
                 const SizedBox(height: 24),
@@ -301,7 +291,10 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
             ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(color: Colors.white)),
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
