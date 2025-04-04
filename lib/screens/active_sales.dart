@@ -255,7 +255,7 @@ class _ActiveSalesState extends State<ActiveSales> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${sale.weight} kg • Rs.${sale.price}',
+                        '${sale.weight} kg • \Rs.${sale.price}',
                         style: const TextStyle(color: Colors.teal),
                       ),
                       const SizedBox(height: 8),

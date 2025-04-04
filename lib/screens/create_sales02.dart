@@ -1,8 +1,10 @@
-import 'package:bio_boost/services/user_service.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/sales_model.dart';
 import '../services/sales_service.dart';
+import 'package:bio_boost/services/user_service.dart';
 
 class CreateSales02 extends StatefulWidget {
   final String wasteType;
@@ -23,28 +25,45 @@ class _CreateSales02State extends State<CreateSales02> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
-  List<String> imageUrls = [];
+
+  // List to hold the local paths of selected images
+  List<String> imagePaths = [];
+  // List to hold selected image files
+  List<XFile> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
 
   @override
-void initState() {
-  super.initState();
-  loadUserName();
-  loadLocation();
-}
+  void initState() {
+    super.initState();
+    loadUserName();
+    loadLocation();
+  }
 
-void loadUserName() async {
-  String fullName = await UserService().getCurrentUserFullName();
-  setState(() {
-    ownerNameController.text = fullName;
-  });
-}
+  void loadUserName() async {
+    String fullName = await UserService().getCurrentUserFullName();
+    setState(() {
+      ownerNameController.text = fullName;
+    });
+  }
 
-void loadLocation() async {
-  String location = await UserService().getCurrentUserLocation();
-  setState(() {
-    locationController.text = location;
-  });
-}
+  void loadLocation() async {
+    String location = await UserService().getCurrentUserLocation();
+    setState(() {
+      locationController.text = location;
+    });
+  }
+
+  // Method to pick images from gallery
+  Future<void> _pickImages() async {
+    final List<XFile>? images = await _picker.pickMultiImage();
+    if (images != null && images.isNotEmpty) {
+      setState(() {
+        _selectedImages = images;
+        // Instead of uploading, save the local path of each image
+        imagePaths = images.map((image) => image.path).toList();
+      });
+    }
+  }
 
   Future<void> _createSale() async {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -58,7 +77,7 @@ void loadLocation() async {
     if (!_formKey.currentState!.validate()) return;
 
     final newSale = Sales(
-      id: '', // Firestore will generate ID
+      id: '', // Firestore will generate an ID
       ownerId: user.uid,
       ownerName: ownerNameController.text,
       location: locationController.text,
@@ -68,9 +87,8 @@ void loadLocation() async {
       contactNumber: contactController.text,
       price: double.tryParse(priceController.text) ?? 0,
       description: descriptionController.text,
-      imageUrls: imageUrls,
-      isActive:
-          true, // Add this required field - default to active when creating
+      imageUrls: imagePaths, // Using local image paths
+      isActive: true,
       isInWishlist: false,
       rating: null,
       postedDate: DateTime.now(),
@@ -80,9 +98,8 @@ void loadLocation() async {
       await widget.salesService.addSale(newSale);
       Navigator.pop(context); // Return after successful creation
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error creating sale: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating sale: $e')));
     }
   }
 
@@ -151,6 +168,41 @@ void loadLocation() async {
                 maxLines: 3,
               ),
               const SizedBox(height: 20),
+              // Button to pick images
+              ElevatedButton(
+                onPressed: _pickImages,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text(
+                  'Add Images',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Display selected images as thumbnails
+              _selectedImages.isNotEmpty
+                  ? SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _selectedImages.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _createSale,
                 style: ElevatedButton.styleFrom(
@@ -192,10 +244,9 @@ void loadLocation() async {
           ),
         ),
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        validator:
-            isRequired
-                ? (value) => value == null || value.isEmpty ? 'Required' : null
-                : null,
+        validator: isRequired
+            ? (value) => value == null || value.isEmpty ? 'Required' : null
+            : null,
         maxLines: maxLines,
       ),
     );

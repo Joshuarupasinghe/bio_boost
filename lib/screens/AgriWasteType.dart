@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/services/sales_service.dart';
@@ -47,9 +49,16 @@ class _SalesListScreenState extends State<SalesListScreen> {
     try {
       final sales = await _salesService.getSalesListings().first;
       setState(() {
-        _salesList = widget.selectedCategory != null
-            ? sales.where((sale) => sale.type == widget.selectedCategory).toList()
-            : sales;
+        _salesList =
+            sales
+                .where(
+                  (sale) =>
+                      sale.isActive &&
+                      (widget.selectedCategory != null
+                          ? sale.type == widget.selectedCategory
+                          : true),
+                )
+                .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -78,9 +87,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.teal),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
     if (_errorMessage != null) {
@@ -120,28 +127,30 @@ class _SalesListScreenState extends State<SalesListScreen> {
           color: Colors.grey[850],
           child: ListTile(
             contentPadding: const EdgeInsets.all(16),
-            leading: sale.imageUrls.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      sale.imageUrls.first,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+            leading:
+                sale.imageUrls.isNotEmpty
+                    ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(sale.imageUrls.first),
                         width: 60,
                         height: 60,
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.image_not_supported),
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, __, ___) => Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey[800],
+                              child: const Icon(Icons.image_not_supported),
+                            ),
                       ),
+                    )
+                    : Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.image_not_supported),
                     ),
-                  )
-                : Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.grey[800],
-                    child: const Icon(Icons.image_not_supported),
-                  ),
             title: Text(
               sale.type,
               style: const TextStyle(
@@ -157,7 +166,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                   style: const TextStyle(color: Colors.white70),
                 ),
                 Text(
-                  '\$${sale.price}',
+                  '\Rs.${sale.price}',
                   style: const TextStyle(color: Colors.teal),
                 ),
               ],
@@ -171,10 +180,11 @@ class _SalesListScreenState extends State<SalesListScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AgriWasteDetailPage(
-                      saleId: sale.id,
-                      currentUserId: _currentUserId!,
-                    ),
+                    builder:
+                        (context) => AgriWasteDetailPage(
+                          saleId: sale.id,
+                          currentUserId: _currentUserId!,
+                        ),
                   ),
                 );
               }
