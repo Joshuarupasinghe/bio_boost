@@ -1,11 +1,42 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:bio_boost/services/user_service.dart';
 import 'active_sales.dart';
 import 'MyProfileEdit.dart';
 import 'sign_In.dart';
 
-class SellerProfilePage extends StatelessWidget {
+class SellerProfilePage extends StatefulWidget {
   const SellerProfilePage({super.key});
+
+  @override
+  State<SellerProfilePage> createState() => _SellerProfilePageState();
+}
+
+class _SellerProfilePageState extends State<SellerProfilePage> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
+  final TextEditingController contactController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  void loadUserData() async {
+    String fullName = await UserService().getCurrentUserFullName();
+    String location = await UserService().getCurrentUserLocation();
+    String email = FirebaseAuth.instance.currentUser?.email ?? "Not Available";
+    String contact = await UserService().getCurrentUserPhoneNumber();
+
+    setState(() {
+      nameController.text = fullName;
+      locationController.text = location;
+      emailController.text = email;
+      contactController.text = contact;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,22 +47,22 @@ class SellerProfilePage extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              SizedBox(height: 30),
-              CircleAvatar(
+              const SizedBox(height: 30),
+              const CircleAvatar(
                 radius: 70,
                 backgroundColor: Colors.black,
                 child: Icon(Icons.person, size: 50, color: Colors.white),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
-                "Sachintha",
-                style: TextStyle(
+                nameController.text,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Align(
                 alignment: Alignment.centerLeft,
                 child: ElevatedButton(
@@ -44,51 +75,51 @@ class SellerProfilePage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                   ),
-                  child: Text("Edit Profile"),
+                  child: const Text("Edit Profile"),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Sachintha Gimhan",
-                        style: TextStyle(fontSize: 20, color: Colors.white),
+                        nameController.text,
+                        style: const TextStyle(fontSize: 20, color: Colors.white),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
-                          Icon(Icons.location_pin, color: Colors.white),
-                          SizedBox(width: 5),
+                          const Icon(Icons.location_pin, color: Colors.white),
+                          const SizedBox(width: 5),
                           Text(
-                            "Pitipana, Colombo",
-                            style: TextStyle(fontSize: 20, color: Colors.white),
+                            locationController.text,
+                            style: const TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
-                          Icon(Icons.call, color: Colors.white),
-                          SizedBox(width: 5),
+                          const Icon(Icons.call, color: Colors.white),
+                          const SizedBox(width: 5),
                           Text(
-                            "077 xxxxxxx",
-                            style: TextStyle(fontSize: 20, color: Colors.white),
+                            contactController.text,
+                            style: const TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
-                          Icon(Icons.email, color: Colors.white),
-                          SizedBox(width: 5),
+                          const Icon(Icons.email, color: Colors.white),
+                          const SizedBox(width: 5),
                           Text(
-                            "sachintha123@gmail.com",
-                            style: TextStyle(fontSize: 20, color: Colors.white),
+                            emailController.text,
+                            style: const TextStyle(fontSize: 20, color: Colors.white),
                           ),
                         ],
                       ),
@@ -96,7 +127,7 @@ class SellerProfilePage extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -119,11 +150,10 @@ class SellerProfilePage extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const SignInPage()),
@@ -131,7 +161,7 @@ class SellerProfilePage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                child: Text("Logout", style: TextStyle(color: Colors.white)),
+                child: const Text("Logout", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

@@ -1,10 +1,11 @@
-import 'package:bio_boost/screens/detail.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bio_boost/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:bio_boost/data/sales_service.dart';
-import 'dart:convert';
+
+import '../services/sales_service.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -74,9 +75,7 @@ class _WishlistPageState extends State<WishlistPage> {
 
       setState(() {
         _wishlist =
-            wishlist
-                .map((item) => jsonDecode(item) as Map<String, dynamic>)
-                .toList();
+            wishlist.map((item) => jsonDecode(item) as Map<String, dynamic>).toList();
       });
     } catch (e) {
       setState(() {
@@ -168,130 +167,111 @@ class _WishlistPageState extends State<WishlistPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child:
-            _wishlist.isEmpty
-                ? const Center(
-                  child: Text(
-                    "No items in Wishlist",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                )
-                : ListView.builder(
-                  itemCount: _wishlist.length,
-                  itemBuilder: (context, index) {
-                    final item = _wishlist[index];
-                    return _buildWishlistCard(item, index);
-                  },
+        child: _wishlist.isEmpty
+            ? const Center(
+                child: Text(
+                  "No items in Wishlist",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
+              )
+            : ListView.builder(
+                itemCount: _wishlist.length,
+                itemBuilder: (context, index) {
+                  final item = _wishlist[index];
+                  return _buildWishlistCard(item, index);
+                },
+              ),
       ),
     );
   }
 
   Widget _buildWishlistCard(Map<String, dynamic> item, int index) {
-    return GestureDetector(
-      onTap: () {
-        if (_currentUserId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => AgriWasteDetailPage(
-                    saleId: item['id'],
-                    currentUserId: _currentUserId!, // Pass current user ID
-                  ),
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
+              borderRadius: BorderRadius.circular(8),
             ),
-          );
-        }
-      },
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[850],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image:
-                              item['image'] != null
-                                  ? DecorationImage(
-                                    image: NetworkImage(item['image']),
-                                    fit: BoxFit.cover,
-                                  )
-                                  : null,
-                          color: Colors.black,
-                        ),
-                        child:
-                            item['image'] == null
-                                ? const Center(
-                                  child: Text(
-                                    "No Image",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                )
-                                : null,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: item['image'] != null && item['image'].toString().isNotEmpty
+                            ? DecorationImage(
+                                image: FileImage(File(item['image'])),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: Colors.black,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Owner: ${item['owner']}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                      child: item['image'] == null || item['image'].toString().isEmpty
+                          ? const Center(
+                              child: Text(
+                                "No Image",
+                                style: TextStyle(color: Colors.white),
                               ),
-                            ),
-                            Text(
-                              "Location: ${item['location']}",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            Text(
-                              "Weight: ${item['weight']}",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            Text(
-                              "Type: ${item['type']}",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Call Button
-                          IconButton(
-                            icon: const Icon(Icons.call, color: Colors.white),
-                            onPressed: () {}, // Implement call functionality
+                          Text(
+                            "Owner: ${item['owner']}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          // Delete Button
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeFromWishlist(index),
+                          Text(
+                            "Location: ${item['location']}",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            "Weight: ${item['weight']}",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            "Type: ${item['type']}",
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    Column(
+                      children: [
+                        // Call Button
+                        IconButton(
+                          icon: const Icon(Icons.call, color: Colors.white),
+                          onPressed: () {}, // Implement call functionality
+                        ),
+                        // Delete Button
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _removeFromWishlist(index),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

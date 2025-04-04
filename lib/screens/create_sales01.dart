@@ -7,7 +7,7 @@ class CreateSales01 extends StatefulWidget {
   const CreateSales01({super.key});
 
   @override
-  _CreateSales01State createState() => _CreateSales01State();
+  State<CreateSales01> createState() => _CreateSales01State();
 }
 
 class _CreateSales01State extends State<CreateSales01> {
@@ -15,7 +15,6 @@ class _CreateSales01State extends State<CreateSales01> {
   final AuthService _authService = AuthService();
   bool _isLoading = true;
   String? _errorMessage;
-  String? _userRole;
 
   @override
   void initState() {
@@ -24,23 +23,29 @@ class _CreateSales01State extends State<CreateSales01> {
   }
 
   Future<void> _checkUserRole() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      String? role = await _authService.getUserRole(user.uid);
-      setState(() {
-        _userRole = role;
-        _isLoading = false;
-      });
-
-      if (role != 'Seller') {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        String? role = await _authService.getUserRole(user.uid);
         setState(() {
-          _errorMessage = 'You do not have permission to create sales.';
+          _isLoading = false;
+        });
+
+        if (role != 'Seller') {
+          setState(() {
+            _errorMessage = 'Only sellers can create sales posts.';
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Please sign in to create sales posts.';
         });
       }
-    } else {
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'No user is signed in.';
+        _errorMessage = 'Error verifying user permissions.';
       });
     }
   }
@@ -50,7 +55,9 @@ class _CreateSales01State extends State<CreateSales01> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: Colors.grey[900],
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.teal),
+        ),
       );
     }
 
@@ -60,81 +67,113 @@ class _CreateSales01State extends State<CreateSales01> {
         appBar: AppBar(
           title: const Text('Access Denied'),
           backgroundColor: Colors.grey[850],
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: Center(
-          child: Text(
-            _errorMessage!,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
-            textAlign: TextAlign.center,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 50, color: Colors.red),
+                const SizedBox(height: 20),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.white70, fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Go Back'),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
-    final List<String> wasteTypes = [
-      'Paddy Husk & Straw',
-      'Coconut Husks and Shells',
-      'Tea Waste',
-      'Rubber Wood and Latex Waste',
-      'Fruit and Vegetable Waste',
-      'Sugarcane Bagasse',
-      'Oil Cake and Residues',
-      'Maize and Other Cereal Residues',
-      'Banana Plant Waste',
-      'Other',
+    final List<Map<String, dynamic>> wasteTypes = [
+      {'name': 'Paddy Husk & Straw', 'icon': Icons.grass},
+      {'name': 'Coconut Husks and Shells', 'icon': Icons.nature},
+      {'name': 'Tea Waste', 'icon': Icons.emoji_food_beverage},
+      {'name': 'Rubber Wood and Latex Waste', 'icon': Icons.park},
+      {'name': 'Fruit and Vegetable Waste', 'icon': Icons.food_bank},
+      {'name': 'Sugarcane Bagasse', 'icon': Icons.agriculture},
+      {'name': 'Oil Cake and Residues', 'icon': Icons.cake},
+      {'name': 'Maize and Other Cereal Residues', 'icon': Icons.grain},
+      {'name': 'Banana Plant Waste', 'icon': Icons.eco},
+      {'name': 'Other', 'icon': Icons.more_horiz},
     ];
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
         title: const Text(
-          'Create Your Sales Post',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Select Waste Type',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.grey[850],
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.1,
+            crossAxisCount: 2,
+            crossAxisSpacing: 15,
+            mainAxisSpacing: 15,
+            childAspectRatio: 1.0,
           ),
           itemCount: wasteTypes.length,
           itemBuilder: (context, index) {
-            return ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[800],
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+            final item = wasteTypes[index];
+            return Card(
+              color: Colors.grey[800],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CreateSales02(selectedCategory: wasteTypes[index]),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => CreateSales02(
+                            wasteType: item['name'], // Changed to wasteType
+                          ),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(item['icon'], size: 40, color: Colors.teal),
+                      const SizedBox(height: 10),
+                      Text(
+                        item['name'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.image, size: 30, color: Colors.white70),
-                  const SizedBox(height: 8),
-                  Text(
-                    wasteTypes[index],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.white),
-                  ),
-                ],
+                ),
               ),
             );
           },

@@ -1,85 +1,110 @@
 class Sales {
-  final String documentId;
-  final String s_ownerName;
-  final String s_location;
-  final String s_weight;
-  final String s_type;
-  final String s_address;
-  final String s_contactNumber;
-  final String s_price;
-  final String s_description;
-  final String s_mainImage;
-  final List<String> s_otherImages;
-  final String uid; // Added seller ID field
-  final String s_status;
+  final String id;
+  final String ownerId;
+  final String ownerName;
+  final String location;
+  final double weight;
+  final String type;
+  final String address;
+  final String contactNumber;
+  final double price;
+  final String description;
+  final List<String> imageUrls;
+  final bool isActive;  // Add this field
+  final bool isInWishlist;
+  final double? rating;
+  final DateTime? postedDate;
 
   Sales({
-    required this.documentId,
-    required this.s_ownerName,
-    required this.s_location,
-    required this.s_weight,
-    required this.s_type,
-    required this.s_address,
-    required this.s_contactNumber,
-    required this.s_price,
-    required this.s_description,
-    required this.s_mainImage,
-    required this.s_otherImages,
-    required this.uid, // Added to constructor
-    required this.s_status,
+    required this.id,
+    required this.ownerId,
+    required this.ownerName,
+    required this.location,
+    required this.weight,
+    required this.type,
+    required this.address,
+    required this.contactNumber,
+    required this.price,
+    required this.description,
+    required this.imageUrls,
+    required this.isActive,  // Add to constructor
+    this.isInWishlist = false,
+    this.rating,
+    this.postedDate,
   });
 
-  factory Sales.fromMap(Map<String, dynamic> data, String documentId) {
+  factory Sales.fromMap(Map<String, dynamic> map, String id) {
     return Sales(
-      documentId: documentId,
-      s_ownerName: data['s_name'] ?? '',
-      s_location: data['s_location'] ?? '',
-      s_weight: data['s_weight'] ?? '',
-      s_type: data['s_type'] ?? '',
-      s_address: data['s_address'] ?? '',
-      s_contactNumber: data['s_contactNumber'] ?? '',
-      s_price: data['s_price'] ?? '',
-      s_description: data['s_description'] ?? '',
-      s_mainImage: data['s_mainImage'] ?? 'https://via.placeholder.com/250',
-      s_otherImages: List<String>.from(data['s_otherImages'] ?? []),
-      uid: data['uid'],
-      s_status: data['s_status'] ?? 'Active',
+      id: id,
+      ownerId: map['ownerId'] ?? '',
+      ownerName: map['ownerName'] ?? '',
+      location: map['location'] ?? '',
+      weight: (map['weight'] ?? 0).toDouble(),
+      type: map['type'] ?? '',
+      address: map['address'] ?? '',
+      contactNumber: map['contactNumber'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      description: map['description'] ?? '',
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+      isActive: map['isActive'] ?? true,  // Default to true if not specified
+      isInWishlist: map['isInWishlist'] ?? false,
+      rating: (map['rating'] ?? 0).toDouble(),
+      postedDate: map['postedDate']?.toDate(),
     );
   }
 
-  // Convert to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
-      's_name': s_ownerName,
-      's_location': s_location,
-      's_weight': s_weight,
-      's_type': s_type,
-      's_address': s_address,
-      's_contactNumber': s_contactNumber,
-      's_price': s_price,
-      's_description': s_description,
-      's_mainImage': s_mainImage,
-      's_otherImages': s_otherImages,
-      'uid': uid, // Include seller ID in the map
-      's_status': s_status,
+      'ownerId': ownerId,
+      'ownerName': ownerName,
+      'location': location,
+      'weight': weight,
+      'type': type,
+      'address': address,
+      'contactNumber': contactNumber,
+      'price': price,
+      'description': description,
+      'imageUrls': imageUrls,
+      'isActive': isActive,  // Include in toMap
+      'isInWishlist': isInWishlist,
+      'rating': rating,
+      'postedDate': postedDate,
     };
   }
 
-  Sales copyWith({String? status}) {
+  Sales copyWith({
+    String? id,
+    String? ownerId,
+    String? ownerName,
+    String? location,
+    double? weight,
+    String? type,
+    String? address,
+    String? contactNumber,
+    double? price,
+    String? description,
+    List<String>? imageUrls,
+    bool? isActive,
+    bool? isInWishlist,
+    double? rating,
+    DateTime? postedDate,
+  }) {
     return Sales(
-      documentId: documentId,
-      s_ownerName: s_ownerName,
-      s_location: s_location,
-      s_weight: s_weight,
-      s_type: s_type,
-      s_address: s_address,
-      s_contactNumber: s_contactNumber,
-      s_price: s_price,
-      s_description: s_description,
-      s_mainImage: s_mainImage,
-      s_otherImages: s_otherImages,
-      uid: uid,
-      s_status: s_status ?? s_status,
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      ownerName: ownerName ?? this.ownerName,
+      location: location ?? this.location,
+      weight: weight ?? this.weight,
+      type: type ?? this.type,
+      address: address ?? this.address,
+      contactNumber: contactNumber ?? this.contactNumber,
+      price: price ?? this.price,
+      description: description ?? this.description,
+      imageUrls: imageUrls ?? this.imageUrls,
+      isActive: isActive ?? this.isActive,
+      isInWishlist: isInWishlist ?? this.isInWishlist,
+      rating: rating ?? this.rating,
+      postedDate: postedDate ?? this.postedDate,
     );
   }
 }
