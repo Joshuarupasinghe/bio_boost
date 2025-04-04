@@ -1,7 +1,9 @@
+import 'package:bio_boost/screens/detail.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bio_boost/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bio_boost/data/sales_service.dart';
 import 'dart:convert';
 
 class WishlistPage extends StatefulWidget {
@@ -15,6 +17,8 @@ class _WishlistPageState extends State<WishlistPage> {
   List<Map<String, dynamic>> _wishlist = [];
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
+  final SalesService _salesService = SalesService();
+  String? _currentUserId;
   bool _isLoading = true;
   String? _errorMessage;
   String? _userRole;
@@ -24,6 +28,7 @@ class _WishlistPageState extends State<WishlistPage> {
     super.initState();
     _loadWishlist();
     _checkUserRole();
+    _loadCurrentUser();
   }
 
   Future<void> _checkUserRole() async {
@@ -53,6 +58,13 @@ class _WishlistPageState extends State<WishlistPage> {
         _errorMessage = 'Failed to check user role: $e';
       });
     }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentUserId = prefs.getString('currentUserId') ?? 'defaultUser';
+    });
   }
 
   Future<void> _loadWishlist() async {
@@ -176,94 +188,110 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
   Widget _buildWishlistCard(Map<String, dynamic> item, int index) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        if (_currentUserId != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => AgriWasteDetailPage(
+                    saleId: item['id'],
+                    currentUserId: _currentUserId!, // Pass current user ID
+                  ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image:
-                            item['image'] != null
-                                ? DecorationImage(
-                                  image: NetworkImage(item['image']),
-                                  fit: BoxFit.cover,
+          );
+        }
+      },
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          image:
+                              item['image'] != null
+                                  ? DecorationImage(
+                                    image: NetworkImage(item['image']),
+                                    fit: BoxFit.cover,
+                                  )
+                                  : null,
+                          color: Colors.black,
+                        ),
+                        child:
+                            item['image'] == null
+                                ? const Center(
+                                  child: Text(
+                                    "No Image",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 )
                                 : null,
-                        color: Colors.black,
                       ),
-                      child:
-                          item['image'] == null
-                              ? const Center(
-                                child: Text(
-                                  "No Image",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              )
-                              : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Owner: ${item['owner']}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Owner: ${item['owner']}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                            Text(
+                              "Location: ${item['location']}",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              "Weight: ${item['weight']}",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              "Type: ${item['type']}",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          // Call Button
+                          IconButton(
+                            icon: const Icon(Icons.call, color: Colors.white),
+                            onPressed: () {}, // Implement call functionality
                           ),
-                          Text(
-                            "Location: ${item['location']}",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            "Weight: ${item['weight']}",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            "Type: ${item['type']}",
-                            style: const TextStyle(color: Colors.white),
+                          // Delete Button
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _removeFromWishlist(index),
                           ),
                         ],
                       ),
-                    ),
-                    Column(
-                      children: [
-                        // Call Button
-                        IconButton(
-                          icon: const Icon(Icons.call, color: Colors.white),
-                          onPressed: () {}, // Implement call functionality
-                        ),
-                        // Delete Button
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _removeFromWishlist(index),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
