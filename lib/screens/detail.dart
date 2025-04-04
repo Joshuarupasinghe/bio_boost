@@ -207,7 +207,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                       _buildDetailRow('Location:', agriWaste.location),
                       _buildDetailRow('Type:', agriWaste.type),
                       _buildDetailRow('Weight:', '${agriWaste.weight} kg'),
-                      _buildDetailRow('Price:', '\$${agriWaste.price}'),
+                      _buildDetailRow('Price:', '\Rs.${agriWaste.price}'),
                       _buildDetailRow('Contact:', agriWaste.contactNumber),
                       const SizedBox(height: 12),
                       const Text(
