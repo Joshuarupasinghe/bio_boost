@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class AgriWasteDetailPage extends StatefulWidget {
-
   final String saleId;
   final String currentUserId;
 
@@ -13,7 +12,6 @@ class AgriWasteDetailPage extends StatefulWidget {
     super.key,
     required this.saleId,
     required this.currentUserId,
-
   });
 
   @override
@@ -45,16 +43,17 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
       'buyerId': widget.currentUserId,
     });
 
+    // Check if the sale is already in the wishlist
     if (!wishlist.contains(saleJson)) {
       wishlist.add(saleJson);
       await prefs.setStringList('wishlist', wishlist);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Added to Wishlist")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Added to Wishlist")));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Already in Wishlist")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Already in Wishlist")));
     }
   }
 
@@ -89,7 +88,6 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
               children: [
                 _buildImageSection(agriWaste),
                 const SizedBox(height: 10),
-
 
                 // Secondary images row
                 SizedBox(
@@ -185,7 +183,6 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
 
                 _buildButtons(agriWaste),
 
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -253,36 +250,42 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
     ];
 
     return Column(
-      children: details.map((item) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 120,
-                child: Text(
-                  item['label']!,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w500, color: Colors.black87),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(4),
+      children:
+          details.map((item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      item['label']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    item['value']!,
-                    style: const TextStyle(color: Colors.black),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        item['value']!,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 
