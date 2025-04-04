@@ -1,96 +1,187 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bio_boost/models/sales_model.dart';
+import 'package:bio_boost/services/sales_service.dart';
 import 'package:bio_boost/screens/detail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class AgriWasteTypePage extends StatefulWidget {
+class SalesListScreen extends StatefulWidget {
+  final String? selectedCategory;
+
+  const SalesListScreen({super.key, this.selectedCategory});
+
   @override
-  _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
+  State<SalesListScreen> createState() => _SalesListScreenState();
 }
 
-class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class _SalesListScreenState extends State<SalesListScreen> {
+  final SalesService _salesService = SalesService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  User? _currentUser;
+  List<Sales> _salesList = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _getCurrentUser();
+    _loadCurrentUser();
+    _fetchSales();
   }
 
-  void _getCurrentUser() {
-    setState(() {
-      _currentUser = _auth.currentUser;
-    });
+  Future<void> _loadCurrentUser() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      setState(() {
+        _currentUserId = user.uid;
+      });
+    } else {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _currentUserId = prefs.getString('currentUserId');
+      });
+    }
+  }
+
+  Future<void> _fetchSales() async {
+    try {
+      final sales = await _salesService.getSalesListings().first;
+      setState(() {
+        _salesList = widget.selectedCategory != null
+            ? sales.where((sale) => sale.type == widget.selectedCategory).toList()
+            : sales;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load sales: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentUser == null) {
-      return Scaffold(
-        body: Center(child: Text("Please sign in to view the listings.")),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: Text("Agri Waste Type"),
-        backgroundColor: Colors.black,
+        title: Text(
+          widget.selectedCategory ?? 'All Listings',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey[850],
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection("agri_waste_data").snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Text(
-                "No data available",
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+      body: _buildBody(),
+    );
+  }
 
-          final data = snapshot.data!.docs;
-          return ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              var doc = data[index];
-              return Card(
-                color: Colors.grey[800],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ListTile(
-                  title: Text(
-                    "Waste Type: ${doc["wasteType"]}",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    "Location: ${doc["city"]}, ${doc["district"]}",
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => AgriWasteDetailPage(
-                              currentUser: _currentUser!,
-                              saleId: doc.id, // Pass the sales document ID
-                            ),
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.teal),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Text(
+          _errorMessage!,
+          style: const TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    if (_salesList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.inventory_2, size: 50, color: Colors.grey),
+            const SizedBox(height: 20),
+            Text(
+              widget.selectedCategory != null
+                  ? 'No ${widget.selectedCategory} listings available'
+                  : 'No listings available',
+              style: const TextStyle(color: Colors.white70, fontSize: 18),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _salesList.length,
+      itemBuilder: (context, index) {
+        final sale = _salesList[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          color: Colors.grey[850],
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: sale.imageUrls.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      sale.imageUrls.first,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.image_not_supported),
                       ),
-                    );
-                  },
+                    ),
+                  )
+                : Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey[800],
+                    child: const Icon(Icons.image_not_supported),
+                  ),
+            title: Text(
+              sale.type,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${sale.weight} kg',
+                  style: const TextStyle(color: Colors.white70),
                 ),
-              );
+                Text(
+                  '\$${sale.price}',
+                  style: const TextStyle(color: Colors.teal),
+                ),
+              ],
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white70,
+            ),
+            onTap: () {
+              if (_currentUserId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AgriWasteDetailPage(
+                      saleId: sale.id,
+                      currentUserId: _currentUserId!,
+                    ),
+                  ),
+                );
+              }
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
