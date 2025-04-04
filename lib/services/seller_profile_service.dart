@@ -46,10 +46,7 @@ class SellerProfileService {
       }
 
       // Update profile in Firestore
-      await _firestore.collection('sellers').doc(currentUserId).set(
-            profileData,
-            SetOptions(merge: true),
-          );
+      await _firestore.collection('users').doc(currentUserId).update(profileData);
       
       return true;
     } catch (e) {
@@ -85,10 +82,18 @@ class SellerProfileService {
         return null;
       }
 
-      final doc = await _firestore.collection('sellers').doc(currentUserId).get();
+      final doc = await _firestore.collection('users').doc(currentUserId).get();
       
       if (doc.exists) {
-        return doc.data();
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        // Add username from email if not present
+        if (!data.containsKey('username')) {
+          String? email = _auth.currentUser?.email;
+          if (email != null) {
+            data['username'] = email.split('@')[0];
+          }
+        }
+        return data;
       } else {
         return null;
       }

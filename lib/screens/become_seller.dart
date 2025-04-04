@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/seller_auth_service.dart';
 
 class BecomeSellerPage extends StatefulWidget {
   const BecomeSellerPage({super.key});
@@ -14,6 +15,8 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  
+  final SellerAuthService _authService = SellerAuthService();
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -37,7 +40,7 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
               .get();
 
       if (sellerDoc.exists &&
-          sellerDoc.data()?['roles']?.contains('seller') == true) {
+          sellerDoc.data()?['role'] == 'seller') {
         setState(() {
           isAlreadySeller = true;
           authStatus = "✅ You are already a registered seller!";
@@ -68,39 +71,13 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
     setState(() => isLoading = true);
 
     try {
-      // Check if the username already exists as a seller
-      var existingUser =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .where('username', isEqualTo: username)
-              .where('roles', arrayContains: 'seller')
-              .get();
+      // Use the SellerAuthService to register the user
+      final result = await _authService.registerSeller(
+        username: username,
+        password: password,
+      );
 
-      if (existingUser.docs.isNotEmpty) {
-        setState(() {
-          authStatus = "❌ You are already registered as a seller!";
-          isAlreadySeller = true;
-        });
-        return;
-      }
-
-      // Register new seller in Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: "$username@sellers.com", // Fake email for authentication
-            password: password,
-          );
-
-      User? user = userCredential.user;
-      if (user != null) {
-        // Store seller details in Firestore
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'username': username,
-          'roles': ['seller'],
-          'email': user.email,
-          'createdAt': Timestamp.now(),
-        });
-
+      if (result['success']) {
         setState(() {
           authStatus = "✅ Registration successful! Redirecting to Home...";
         });
@@ -114,7 +91,16 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
         await Future.delayed(const Duration(seconds: 2));
 
         // Navigate to homepage
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() {
+          authStatus = "❌ Registration failed: ${result['error']}";
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${result['error']}')),
+        );
       }
     } catch (e) {
       setState(() => authStatus = "❌ Registration failed: ${e.toString()}");
@@ -243,6 +229,31 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
     );
   }
 
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[700]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[700]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.teal),
+        ),
+        filled: true,
+        fillColor: Colors.grey[800],
+      ),
+    );
+  }
+
   Widget _buildPasswordField(
     String label,
     TextEditingController controller,
@@ -255,31 +266,28 @@ class _BecomeSellerPageState extends State<BecomeSellerPage> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: const TextStyle(color: Colors.white60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[700]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[700]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.teal),
+        ),
         filled: true,
         fillColor: Colors.grey[800],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         suffixIcon: IconButton(
           icon: Icon(
-            isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.white,
+            isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+            color: Colors.white60,
           ),
           onPressed: () => onVisibilityChanged(!isPasswordVisible),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: Colors.grey[800],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

@@ -18,9 +18,8 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final picker = ImagePicker();
-  // Initialize the seller profile service
   final SellerProfileService _profileService = SellerProfileService();
-  final bool _isLoading = true;
+  bool _isLoading = true;
 
   File? _profileImage;
   String? _downloadUrl;
@@ -212,7 +211,6 @@ class _MyProfileEditState extends State<MyProfileEdit> {
     "Polgahawela",
     "Polonnaruwa",
     "Pottuvil",
-    "Puthukkudiyiruppu",
     "Puttalam",
     "Rambukkana",
     "Rattota",
@@ -242,27 +240,34 @@ class _MyProfileEditState extends State<MyProfileEdit> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _loadProfileData();
   }
 
-  Future<void> _loadUserProfile() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(user.uid).get();
-      if (userDoc.exists) {
-        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final profileData = await _profileService.getSellerProfile();
+      if (profileData != null) {
         setState(() {
-          firstNameController.text = data['firstName'] ?? '';
-          lastNameController.text = data['lastName'] ?? '';
-          contactController.text = data['contactNumber'] ?? '';
-          emailController.text = data['email'] ?? '';
-          selectedDistrict = data['district'] ?? 'Colombo';
-          selectedCity = data['city'] ?? 'Nugegoda';
-          _downloadUrl = data['profileImagePath'];
+          firstNameController.text = profileData['firstName'] ?? '';
+          lastNameController.text = profileData['lastName'] ?? '';
+          contactController.text = profileData['contact'] ?? '';
+          emailController.text = profileData['email'] ?? '';
+          selectedDistrict = profileData['district'] ?? 'Colombo';
+          selectedCity = profileData['city'] ?? 'Nugegoda';
+          _downloadUrl = profileData['profileImage'];
         });
       }
+    } catch (e) {
+      print('Error loading profile data: $e');
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _pickImage() async {
@@ -274,172 +279,215 @@ class _MyProfileEditState extends State<MyProfileEdit> {
     }
   }
 
-  Future<String?> _uploadImage(File image) async {
-    try {
-      String userId = _auth.currentUser!.uid;
-      Reference ref = _storage.ref().child('profile_images/$userId.jpg');
-      await ref.putFile(image);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print("❌ Error uploading image: $e");
-      return null;
-    }
-  }
-
   Future<void> _saveProfile() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      User? user = _auth.currentUser;
-      if (user == null) {
-        print("❌ User not signed in!");
-        return;
+      bool success = await _profileService.updateSellerProfile(
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
+        contact: contactController.text,
+        email: emailController.text,
+        district: selectedDistrict,
+        city: selectedCity,
+        profileImage: _profileImage,
+      );
+
+      if (success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+        Navigator.pop(context);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update profile')),
+        );
       }
-
-      String? imageUrl = _downloadUrl;
-      if (_profileImage != null) {
-        print("📸 Uploading profile image...");
-        imageUrl = await _uploadImage(_profileImage!);
-      }
-
-      Map<String, dynamic> userProfile = {
-        'firstName': firstNameController.text,
-        'lastName': lastNameController.text,
-        'contactNumber': contactController.text,
-        'email': emailController.text,
-        'district': selectedDistrict,
-        'city': selectedCity,
-        'profileImagePath': imageUrl,
-      };
-
-      print("📤 Saving profile data...");
-      await _firestore.collection('users').doc(user.uid).set(userProfile);
-      print("✅ Profile updated successfully!");
     } catch (e) {
-      print("❌ Error saving profile: $e");
+      print('Error saving profile: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating profile')),
+      );
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Profile Picture
-            Center(
-              child: Stack(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text('Edit Profile'),
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[700],
-                    backgroundImage:
-                        _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : (_downloadUrl != null
-                                    ? NetworkImage(_downloadUrl!)
-                                    : null)
-                                as ImageProvider?,
-                    child:
-                        _profileImage == null && _downloadUrl == null
-                            ? Icon(Icons.person, color: Colors.white, size: 50)
-                            : null,
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: _profileImage != null
+                          ? FileImage(_profileImage!)
+                          : (_downloadUrl != null
+                              ? NetworkImage(_downloadUrl!)
+                              : null) as ImageProvider?,
+                      child: (_profileImage == null && _downloadUrl == null)
+                          ? Icon(Icons.camera_alt, size: 40, color: Colors.white)
+                          : null,
+                    ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: InkWell(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.black,
-                        child: Icon(Icons.camera_alt, color: Colors.white),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: firstNameController,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'First Name',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  TextField(
+                    controller: lastNameController,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Last Name',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  TextField(
+                    controller: contactController,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Contact Number',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  TextField(
+                    controller: emailController,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  DropdownButtonFormField<String>(
+                    value: selectedDistrict,
+                    dropdownColor: Colors.grey[850],
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'District',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                    items: districts.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedDistrict = newValue;
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(height: 15),
+                  DropdownButtonFormField<String>(
+                    value: selectedCity,
+                    dropdownColor: Colors.grey[850],
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'City',
+                      labelStyle: TextStyle(color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.teal),
+                      ),
+                    ),
+                    items: cities.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedCity = newValue;
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(height: 30),
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Save Changes',
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 10),
-
-            // User Fields
-            _buildTextField(firstNameController, "First Name"),
-            _buildTextField(lastNameController, "Last Name"),
-            _buildTextField(contactController, "Contact Number"),
-            _buildTextField(emailController, "Email (Optional)"),
-
-            // Location
-            _buildDropdown("District", districts, selectedDistrict, (newValue) {
-              setState(() {
-                selectedDistrict = newValue!;
-              });
-            }),
-            _buildDropdown("City", cities, selectedCity, (newValue) {
-              setState(() {
-                selectedCity = newValue!;
-              });
-            }),
-
-            SizedBox(height: 20),
-            // Update Button
-            ElevatedButton(
-              onPressed: _saveProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: Text("Update Profile"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextField(
-        controller: controller,
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.white70),
-          filled: true,
-          fillColor: Colors.grey[800],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(
-    String label,
-    List<String> items,
-    String selectedItem,
-    Function(String?) onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DropdownButtonFormField<String>(
-        value: selectedItem,
-        dropdownColor: Colors.grey[800],
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.white70),
-          filled: true,
-          fillColor: Colors.grey[800],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        items:
-            items.map((String value) {
-              return DropdownMenuItem<String>(value: value, child: Text(value));
-            }).toList(),
-        onChanged: onChanged,
-      ),
     );
   }
 }
