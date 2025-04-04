@@ -23,7 +23,7 @@ class UserService {
     return 'Unknown User';
   }
 
-    Future<String> getCurrentUserLocation() async {
+  Future<String> getCurrentUserLocation() async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -37,6 +37,25 @@ class UserService {
         final district = userData?['district'] ?? '';
         final city = userData?['city'] ?? '';
         return '$city, $district';
+      }
+    }
+
+    return 'Unknown Location';
+  }
+
+  Future<String> getCurrentUserPhoneNumber() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+      if (doc.exists) {
+        final userData = doc.data();
+        final contact = userData?['contactNumber'] ?? '';
+        return '$contact';
       }
     }
 
