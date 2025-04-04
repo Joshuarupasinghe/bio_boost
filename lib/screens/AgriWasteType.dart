@@ -1,349 +1,197 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class AgriWasteTypePage extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:bio_boost/models/sales_model.dart';
+import 'package:bio_boost/services/sales_service.dart';
+import 'package:bio_boost/screens/detail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class SalesListScreen extends StatefulWidget {
   final String? selectedCategory;
 
-  const AgriWasteTypePage({super.key, this.selectedCategory});
+  const SalesListScreen({super.key, this.selectedCategory});
 
   @override
-  _AgriWasteTypePageState createState() => _AgriWasteTypePageState();
+  State<SalesListScreen> createState() => _SalesListScreenState();
 }
 
-class _AgriWasteTypePageState extends State<AgriWasteTypePage> {
-  String? selectedDistrict;
-  String? selectedCity;
-  String? selectedWasteType;
+class _SalesListScreenState extends State<SalesListScreen> {
+  final SalesService _salesService = SalesService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<Sales> _salesList = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    selectedWasteType = widget.selectedCategory; // Set the initial value
+    _loadCurrentUser();
+    _fetchSales();
   }
 
-  List<String> districts = [
-    "Colombo",
-    "Gampaha",
-    "Kalutara",
-    "Kandy",
-    "Matale",
-    "Nuwara Eliya",
-    "Galle",
-    "Matara",
-    "Hambantota",
-    "Jaffna",
-    "Kilinochchi",
-    "Mannar",
-    "Mullaitivu",
-    "Vavuniya",
-    "Trincomalee",
-    "Batticaloa",
-    "Ampara",
-    "Kurunegala",
-    "Puttalam",
-    "Anuradhapura",
-    "Polonnaruwa",
-    "Badulla",
-    "Monaragala",
-    "Ratnapura",
-    "Kegalle",
-  ];
+  Future<void> _loadCurrentUser() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      setState(() {
+        _currentUserId = user.uid;
+      });
+    } else {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _currentUserId = prefs.getString('currentUserId');
+      });
+    }
+  }
 
-  Map<String, List<String>> districtCities = {
-    "Colombo": [
-      "Colombo",
-      "Dehiwala-Mount Lavinia",
-      "Sri Jayawardenepura Kotte",
-      "Moratuwa",
-      "Kolonnawa",
-      "Ratmalana",
-      "Nugegoda",
-      "Maharagama",
-      "Kotikawatta",
-    ],
-    "Gampaha": [
-      "Gampaha",
-      "Negombo",
-      "Kelaniya",
-      "Kadawatha",
-      "Minuwangoda",
-      "Kiribathgoda",
-      "Ja-Ela",
-      "Wattala",
-      "Biyagama",
-    ],
-    "Kalutara": [
-      "Kalutara",
-      "Panadura",
-      "Horana",
-      "Matugama",
-      "Beruwala",
-      "Aluthgama",
-      "Bandaragama",
-      "Ingiriya",
-      "Bulathsinhala",
-    ],
-    "Kandy": [
-      "Kandy",
-      "Katugastota",
-      "Peradeniya",
-      "Gampola",
-      "Kundasale",
-      "Kadugannawa",
-      "Nawalapitiya",
-      "Pilimatalawa",
-      "Akurana",
-    ],
-    "Matale": [
-      "Matale",
-      "Dambulla",
-      "Sigiriya",
-      "Rattota",
-      "Galewela",
-      "Palapathwela",
-      "Naula",
-      "Ukuwela",
-    ],
-    "Nuwara Eliya": [
-      "Nuwara Eliya",
-      "Hatton",
-      "Talawakelle",
-      "Ginigathena",
-      "Kandapola",
-      "Maskeliya",
-      "Kotagala",
-      "Agarapatana",
-    ],
-
-    "Galle": [
-      "Galle",
-      "Ambalangoda",
-      "Hikkaduwa",
-      "Elpitiya",
-      "Baddegama",
-      "Udugama",
-      "Ahangama",
-      "Karapitiya",
-    ],
-    "Matara": [
-      "Matara",
-      "Weligama",
-      "Dikwella",
-      "Akuressa",
-      "Hakmana",
-      "Kamburupitiya",
-      "Thihagoda",
-      "Dickwella",
-    ],
-    "Hambantota": [
-      "Hambantota",
-      "Tangalle",
-      "Ambalantota",
-      "Tissamaharama",
-      "Beliatta",
-      "Weeraketiya",
-      "Walasmulla",
-    ],
-    "Jaffna": ["Jaffna", "Chavakachcheri", "Nallur", "Point Pedro", "Kopay"],
-    "Kilinochchi": ["Kilinochchi", "Paranthan", "Pallai", "Iranamadu"],
-    "Mannar": ["Mannar", "Pesalai", "Madhu", "Nanattan"],
-    "Mullaitivu": ["Mullaitivu", "Puthukkudiyiruppu", "Oddusuddan"],
-    "Vavuniya": ["Vavuniya", "Cheddikulam", "Nedunkeni"],
-    "Trincomalee": ["Trincomalee", "Kantale", "Kinniya", "Muttur"],
-    "Batticaloa": ["Batticaloa", "Kalkudah", "Valaichchenai", "Eravur"],
-    "Ampara": ["Ampara", "Kalmunai", "Akkaraipattu", "Pottuvil"],
-    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Polgahawela"],
-    "Puttalam": ["Puttalam", "Chilaw", "Dankotuwa", "Wennappuwa"],
-    "Anuradhapura": ["Anuradhapura", "Mihintale", "Kekirawa", "Medawachchiya"],
-    "Polonnaruwa": ["Polonnaruwa", "Hingurakgoda", "Kaduruwela", "Bakamuna"],
-    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada"],
-    "Monaragala": ["Monaragala", "Wellawaya", "Bibile", "Buttala"],
-    "Ratnapura": ["Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla"],
-    "Kegalle": ["Kegalle", "Mawanella", "Rambukkana", "Warakapola"],
-  };
-
-  List<String> cities = [];
-
-  List<String> wasteTypes = [
-    "Paddy Husk & Straw",
-    "Coconut Husks & Shells",
-    "Tea Waste",
-    "Rubber Wood & Latex Waste",
-    "Fruit & Vegetable Waste",
-    "Sugarcane Bagasse",
-    "Oil Cake & Residues",
-    "Maize & Other Cereal Residues",
-    "Banana Plant Waste",
-    "Other",
-  ];
+  Future<void> _fetchSales() async {
+    try {
+      final sales = await _salesService.getSalesListings().first;
+      setState(() {
+        _salesList =
+            sales
+                .where(
+                  (sale) =>
+                      sale.isActive &&
+                      (widget.selectedCategory != null
+                          ? sale.type == widget.selectedCategory
+                          : true),
+                )
+                .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load sales: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       backgroundColor: Colors.grey[900],
-      body: Padding(
-        padding: EdgeInsets.all(10),
+      appBar: AppBar(
+        title: Text(
+          widget.selectedCategory ?? 'All Listings',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey[850],
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Text(
+          _errorMessage!,
+          style: const TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    if (_salesList.isEmpty) {
+      return Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  DropdownButtonFormField<String>(
-                    dropdownColor: Colors.grey[700],
-                    value: selectedDistrict,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedDistrict = value;
-                        selectedCity = null;
-                        cities = districtCities[value] ?? [];
-                      });
-                    },
-                    items:
-                        districts
-                            .map(
-                              (d) => DropdownMenuItem(
-                                value: d,
-                                child: Text(
-                                  d,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                    decoration: InputDecoration(
-                      labelText: "District",
-                      labelStyle: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  DropdownButtonFormField<String>(
-                    dropdownColor: Colors.grey[700],
-                    value: selectedCity,
-                    onChanged: (value) => setState(() => selectedCity = value),
-                    items:
-                        cities
-                            .map(
-                              (c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(
-                                  c,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                    decoration: InputDecoration(
-                      labelText: "City",
-                      labelStyle: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text("Filter"),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            DropdownButtonFormField<String>(
-              dropdownColor: Colors.grey[700],
-              value: selectedWasteType,
-              onChanged: (value) => setState(() => selectedWasteType = value),
-              items:
-                  wasteTypes
-                      .map(
-                        (w) => DropdownMenuItem(
-                          value: w,
-                          child: Text(w, style: TextStyle(color: Colors.white)),
-                        ),
-                      )
-                      .toList(),
-              decoration: InputDecoration(
-                labelText: "Agri Waste Type",
-                labelStyle: TextStyle(color: Colors.white),
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return Card(
-                    color: Colors.grey[800],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey,
-                        child: Center(
-                          child: Text(
-                            "Image",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        "Owner: xxxxxxxxxx",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Location: XYZ",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Text(
-                            "Type: Type X",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Text(
-                            "Weight: 20kg",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Text(
-                            "Price: \$XX",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          Row(
-                            children: List.generate(5, (starIndex) {
-                              return Icon(
-                                starIndex < 2 ? Icons.star : Icons.star_border,
-                                color: Colors.yellow,
-                                size: 20,
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                      trailing: Icon(Icons.phone, color: Colors.white),
-                    ),
-                  );
-                },
-              ),
+            const Icon(Icons.inventory_2, size: 50, color: Colors.grey),
+            const SizedBox(height: 20),
+            Text(
+              widget.selectedCategory != null
+                  ? 'No ${widget.selectedCategory} listings available'
+                  : 'No listings available',
+              style: const TextStyle(color: Colors.white70, fontSize: 18),
             ),
           ],
         ),
-      ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _salesList.length,
+      itemBuilder: (context, index) {
+        final sale = _salesList[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          color: Colors.grey[850],
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading:
+                sale.imageUrls.isNotEmpty
+                    ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(sale.imageUrls.first),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, __, ___) => Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey[800],
+                              child: const Icon(Icons.image_not_supported),
+                            ),
+                      ),
+                    )
+                    : Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+            title: Text(
+              sale.type,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${sale.weight} kg',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  '\Rs.${sale.price}',
+                  style: const TextStyle(color: Colors.teal),
+                ),
+              ],
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white70,
+            ),
+            onTap: () {
+              if (_currentUserId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => AgriWasteDetailPage(
+                          saleId: sale.id,
+                          currentUserId: _currentUserId!,
+                        ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }

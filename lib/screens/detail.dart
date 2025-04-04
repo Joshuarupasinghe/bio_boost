@@ -1,13 +1,20 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/models/sales_model.dart';
-import 'package:bio_boost/data/sales_service.dart';
+import 'package:bio_boost/services/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:bio_boost/screens/chat_detail.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
   final String saleId;
+  final String currentUserId;
 
-  const AgriWasteDetailPage({super.key, required this.saleId});
+  const AgriWasteDetailPage({
+    super.key,
+    required this.saleId,
+    required this.currentUserId,
+  });
 
   @override
   _AgriWasteDetailPageState createState() => _AgriWasteDetailPageState();
@@ -16,52 +23,94 @@ class AgriWasteDetailPage extends StatefulWidget {
 class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
   late Future<Sales?> _agriWasteFuture;
   final SalesService _salesService = SalesService();
-  int _selectedImageIndex = -1; // -1 means main image is selected
+  int _selectedImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _agriWasteFuture = _salesService.getSalesDetailsById(widget.saleId);
+    _agriWasteFuture = _salesService.getSalesById(widget.saleId);
   }
 
-  //Adding Data to wishlist page using SharedPreferences
   Future<void> _addToWishlist(Sales agriWaste) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     List<String> wishlist = prefs.getStringList('wishlist') ?? [];
 
     String saleJson = jsonEncode({
-      'id': agriWaste.documentId,
-      'owner': agriWaste.s_ownerName,
-      'location': agriWaste.s_location,
-      'weight': agriWaste.s_weight,
-      'type': agriWaste.s_type,
-      'image': agriWaste.s_mainImage,
+      'id': agriWaste.id,
+      'owner': agriWaste.ownerName,
+      'location': agriWaste.location,
+      'weight': agriWaste.weight,
+      'type': agriWaste.type,
+      'price': agriWaste.price,
+      'image': agriWaste.imageUrls.isNotEmpty ? agriWaste.imageUrls[0] : '',
     });
 
+    // Check if the sale is already in the wishlist
     if (!wishlist.contains(saleJson)) {
       wishlist.add(saleJson);
       await prefs.setStringList('wishlist', wishlist);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Added to Wishlist"),
+          backgroundColor: Colors.teal[400],
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Added to Wishlist")));
+      ).showSnackBar(const SnackBar(content: Text("Already in Wishlist")));
     }
+  }
+
+  void _contactSeller(Sales agriWaste) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatDetailScreen(
+          name: agriWaste.ownerName,
+          avatar: agriWaste.ownerName.isNotEmpty
+              ? agriWaste.ownerName.substring(0, 1).toUpperCase()
+              : 'S',
+          userId: agriWaste.ownerId,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agricultural Waste Details')),
+      appBar: AppBar(
+        title: const Text('Agricultural Waste Details'),
+        backgroundColor: Colors.grey[850],
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.grey[900],
       body: FutureBuilder<Sales?>(
         future: _agriWasteFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.teal),
+            );
           }
+          
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(
+              child: Text(
+                "Error loading details",
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text("No data available"));
+          
+          if (!snapshot.hasData) {
+            return const Center(
+              child: Text(
+                "No data available",
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
 
           final agriWaste = snapshot.data!;
@@ -71,165 +120,151 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Main image container
+                // Main image display
                 Container(
                   height: 250,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _selectedImageIndex == -1
-                          ? agriWaste.s_mainImage
-                          : agriWaste.s_otherImages[_selectedImageIndex],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Text('Image not available'));
-                      },
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: agriWaste.imageUrls.isNotEmpty
+                        ? Image.file(
+                            File(agriWaste.imageUrls[_selectedImageIndex]),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey[400],
+                                size: 50,
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey[400],
+                              size: 50,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
 
-                // Secondary images row
-                SizedBox(
-                  height: 80,
-                  child: Row(
+                // Image thumbnails
+                if (agriWaste.imageUrls.length > 1)
+                  SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: agriWaste.imageUrls.length,
+                      itemBuilder: (context, index) => GestureDetector(
+                        onTap: () => setState(() => _selectedImageIndex = index),
+                        child: Container(
+                          width: 80,
+                          margin: EdgeInsets.only(
+                            right: index == agriWaste.imageUrls.length - 1 ? 0 : 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: _selectedImageIndex == index
+                                  ? Colors.teal
+                                  : Colors.grey[700]!,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(
+                              File(agriWaste.imageUrls[index]),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(Icons.image),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+
+                // Details section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Main image thumbnail
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedImageIndex = -1;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color:
-                                    _selectedImageIndex == -1
-                                        ? Colors.blue
-                                        : Colors.grey,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(3),
-                              child: Image.network(
-                                agriWaste.s_mainImage,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Icon(Icons.image_not_supported),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
+                      _buildDetailRow('Owner:', agriWaste.ownerName),
+                      _buildDetailRow('Location:', agriWaste.location),
+                      _buildDetailRow('Type:', agriWaste.type),
+                      _buildDetailRow('Weight:', '${agriWaste.weight} kg'),
+                      _buildDetailRow('Price:', '\Rs.${agriWaste.price}'),
+                      _buildDetailRow('Contact:', agriWaste.contactNumber),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Description:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
-
-                      // Other images (up to 4 thumbnails)
-                      ...List.generate(
-                        agriWaste.s_otherImages.length > 4
-                            ? 4
-                            : agriWaste.s_otherImages.length,
-                        (index) => Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedImageIndex = index;
-                              });
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color:
-                                      _selectedImageIndex == index
-                                          ? Colors.blue
-                                          : Colors.grey,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(3),
-                                child: Image.network(
-                                  agriWaste.s_otherImages[index],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(
-                                      child: Icon(Icons.image_not_supported),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        agriWaste.description,
+                        style: TextStyle(color: Colors.white70),
                       ),
-
-                      // Fill remaining spaces if less than 4 other images
-                      if (agriWaste.s_otherImages.length < 4)
-                        ...List.generate(
-                          4 - agriWaste.s_otherImages.length,
-                          (index) => Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.image, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 10),
-
-                _buildDetailFields(agriWaste),
-
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.phone),
-                    label: const Text('Contact'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.teal,
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => _contactSeller(agriWaste),
+                        child: const Text(
+                          'Contact Seller',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _addToWishlist(agriWaste),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.teal),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => _addToWishlist(agriWaste),
+                        child: const Text(
+                          'Add to Wishlist',
+                          style: TextStyle(color: Colors.teal),
+                        ),
+                      ),
                     ),
-                    child: const Text('Add To Wish List'),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -239,55 +274,30 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
     );
   }
 
-  Widget _buildDetailFields(Sales agriWaste) {
-    final details = [
-      {'label': 'Owner Name:', 'value': agriWaste.s_ownerName},
-      {'label': 'Location:', 'value': agriWaste.s_location},
-      {'label': 'Weight:', 'value': agriWaste.s_weight},
-      {'label': 'Type:', 'value': agriWaste.s_type},
-      {'label': 'Address:', 'value': agriWaste.s_address},
-      {'label': 'Contact Number:', 'value': agriWaste.s_contactNumber},
-      {'label': 'Price:', 'value': agriWaste.s_price},
-      {'label': 'Description:', 'value': agriWaste.s_description},
-    ];
-
-    return Column(
-      children:
-          details.map((item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: Text(
-                      item['label']!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        item['value']!,
-                        style: const TextStyle(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontWeight: FontWeight.w500,
               ),
-            );
-          }).toList(),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

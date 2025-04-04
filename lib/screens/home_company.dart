@@ -263,7 +263,7 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => AgriWasteTypePage(
+                              (context) => SalesListScreen(
                                 selectedCategory: categories[index]['title']!,
                               ),
                         ),

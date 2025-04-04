@@ -1,8 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bio_boost/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
+
+import '../services/sales_service.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -15,6 +18,8 @@ class _WishlistPageState extends State<WishlistPage> {
   List<Map<String, dynamic>> _wishlist = [];
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
+  final SalesService _salesService = SalesService();
+  String? _currentUserId;
   bool _isLoading = true;
   String? _errorMessage;
   String? _userRole;
@@ -24,6 +29,7 @@ class _WishlistPageState extends State<WishlistPage> {
     super.initState();
     _loadWishlist();
     _checkUserRole();
+    _loadCurrentUser();
   }
 
   Future<void> _checkUserRole() async {
@@ -55,6 +61,13 @@ class _WishlistPageState extends State<WishlistPage> {
     }
   }
 
+  Future<void> _loadCurrentUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentUserId = prefs.getString('currentUserId') ?? 'defaultUser';
+    });
+  }
+
   Future<void> _loadWishlist() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -62,9 +75,7 @@ class _WishlistPageState extends State<WishlistPage> {
 
       setState(() {
         _wishlist =
-            wishlist
-                .map((item) => jsonDecode(item) as Map<String, dynamic>)
-                .toList();
+            wishlist.map((item) => jsonDecode(item) as Map<String, dynamic>).toList();
       });
     } catch (e) {
       setState(() {
@@ -156,21 +167,20 @@ class _WishlistPageState extends State<WishlistPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child:
-            _wishlist.isEmpty
-                ? const Center(
-                  child: Text(
-                    "No items in Wishlist",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                )
-                : ListView.builder(
-                  itemCount: _wishlist.length,
-                  itemBuilder: (context, index) {
-                    final item = _wishlist[index];
-                    return _buildWishlistCard(item, index);
-                  },
+        child: _wishlist.isEmpty
+            ? const Center(
+                child: Text(
+                  "No items in Wishlist",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
+              )
+            : ListView.builder(
+                itemCount: _wishlist.length,
+                itemBuilder: (context, index) {
+                  final item = _wishlist[index];
+                  return _buildWishlistCard(item, index);
+                },
+              ),
       ),
     );
   }
@@ -196,24 +206,22 @@ class _WishlistPageState extends State<WishlistPage> {
                       height: 80,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        image:
-                            item['image'] != null
-                                ? DecorationImage(
-                                  image: NetworkImage(item['image']),
-                                  fit: BoxFit.cover,
-                                )
-                                : null,
+                        image: item['image'] != null && item['image'].toString().isNotEmpty
+                            ? DecorationImage(
+                                image: FileImage(File(item['image'])),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                         color: Colors.black,
                       ),
-                      child:
-                          item['image'] == null
-                              ? const Center(
-                                child: Text(
-                                  "No Image",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              )
-                              : null,
+                      child: item['image'] == null || item['image'].toString().isEmpty
+                          ? const Center(
+                              child: Text(
+                                "No Image",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
