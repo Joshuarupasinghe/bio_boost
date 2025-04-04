@@ -1,6 +1,7 @@
-// services/sales_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sales_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class SalesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -10,6 +11,19 @@ class SalesService {
     return _firestore.collection('sales').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) => Sales.fromMap(doc.data(), doc.id)).toList();
     });
+  }
+
+    Future<Sales?> getSalesById(String saleId) async {
+    try {
+      final doc = await _firestore.collection('sales').doc(saleId).get();
+      if (doc.exists) {
+        return Sales.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting sale: $e');
+      return null;
+    }
   }
 
   // Add a new sale

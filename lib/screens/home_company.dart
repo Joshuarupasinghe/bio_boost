@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bio_boost/screens/AgriWasteType.dart';
 import 'package:flutter/material.dart';
 import 'package:bio_boost/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -257,17 +258,17 @@ class _CompanyHomePageState extends State<CompanyHomePage> {
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                    // onTap: () {
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //       builder:
-                    //           (context) => AgriWasteTypePage(
-                    //             selectedCategory: categories[index]['title']!,
-                    //           ),
-                    //     ),
-                    //   );
-                    // },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => SalesListScreen(
+                                selectedCategory: categories[index]['title']!,
+                              ),
+                        ),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(

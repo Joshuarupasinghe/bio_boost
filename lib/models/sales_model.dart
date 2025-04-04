@@ -1,5 +1,6 @@
 class Sales {
   final String id;
+  final String ownerId;
   final String ownerName;
   final String location;
   final double weight;
@@ -9,12 +10,14 @@ class Sales {
   final double price;
   final String description;
   final List<String> imageUrls;
-  final double? rating;
+  final bool isActive;  // Add this field
   final bool isInWishlist;
+  final double? rating;
   final DateTime? postedDate;
 
   Sales({
     required this.id,
+    required this.ownerId,
     required this.ownerName,
     required this.location,
     required this.weight,
@@ -24,15 +27,16 @@ class Sales {
     required this.price,
     required this.description,
     required this.imageUrls,
-    this.rating,
+    required this.isActive,  // Add to constructor
     this.isInWishlist = false,
+    this.rating,
     this.postedDate,
   });
 
-  // Factory constructor to create from Map (Firestore)
   factory Sales.fromMap(Map<String, dynamic> map, String id) {
     return Sales(
       id: id,
+      ownerId: map['ownerId'] ?? '',
       ownerName: map['ownerName'] ?? '',
       location: map['location'] ?? '',
       weight: (map['weight'] ?? 0).toDouble(),
@@ -42,15 +46,16 @@ class Sales {
       price: (map['price'] ?? 0).toDouble(),
       description: map['description'] ?? '',
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
-      rating: (map['rating'] ?? 0).toDouble(),
+      isActive: map['isActive'] ?? true,  // Default to true if not specified
       isInWishlist: map['isInWishlist'] ?? false,
+      rating: (map['rating'] ?? 0).toDouble(),
       postedDate: map['postedDate']?.toDate(),
     );
   }
 
-  // Convert to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
+      'ownerId': ownerId,
       'ownerName': ownerName,
       'location': location,
       'weight': weight,
@@ -60,14 +65,16 @@ class Sales {
       'price': price,
       'description': description,
       'imageUrls': imageUrls,
-      'rating': rating,
+      'isActive': isActive,  // Include in toMap
       'isInWishlist': isInWishlist,
+      'rating': rating,
       'postedDate': postedDate,
     };
   }
 
   Sales copyWith({
     String? id,
+    String? ownerId,
     String? ownerName,
     String? location,
     double? weight,
@@ -77,11 +84,14 @@ class Sales {
     double? price,
     String? description,
     List<String>? imageUrls,
-    double? rating,
+    bool? isActive,
     bool? isInWishlist,
+    double? rating,
+    DateTime? postedDate,
   }) {
     return Sales(
       id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
       ownerName: ownerName ?? this.ownerName,
       location: location ?? this.location,
       weight: weight ?? this.weight,
@@ -91,8 +101,10 @@ class Sales {
       price: price ?? this.price,
       description: description ?? this.description,
       imageUrls: imageUrls ?? this.imageUrls,
-      rating: rating ?? this.rating,
+      isActive: isActive ?? this.isActive,
       isInWishlist: isInWishlist ?? this.isInWishlist,
+      rating: rating ?? this.rating,
+      postedDate: postedDate ?? this.postedDate,
     );
   }
 }
