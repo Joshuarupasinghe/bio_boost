@@ -50,21 +50,22 @@ class AuthService {
           await _firestore.collection('users').doc(uid).get();
 
       if (userDoc.exists && userDoc.data() != null) {
-        return userDoc['role'] as String; // Assuming role is stored as a field
+        final data = userDoc.data() as Map<String, dynamic>;
+
+        // If you have an array field called 'roles':
+        final List<dynamic> roles = data['roles'] ?? [];
+
+        // If 'seller' is in the array, treat them as a seller
+        if (roles.contains('seller') || roles.contains('Seller')) {
+          return 'Seller';
+        } else {
+          return 'Buyer';
+        }
       }
       return null;
     } catch (e) {
       print("Error getting user role: ${e.toString()}");
       return null;
     }
-  }
-  // Sign Out Method
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  // Get Current User Stream (Listen for Auth Changes)
-  Stream<User?> get userStream {
-    return _auth.authStateChanges();
   }
 }
