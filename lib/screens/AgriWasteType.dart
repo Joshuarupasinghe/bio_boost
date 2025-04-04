@@ -47,9 +47,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
     try {
       final sales = await _salesService.getSalesListings().first;
       setState(() {
-        _salesList = widget.selectedCategory != null
-            ? sales.where((sale) => sale.type == widget.selectedCategory).toList()
-            : sales;
+        _salesList = sales
+            .where((sale) => sale.isActive && 
+                (widget.selectedCategory != null 
+                    ? sale.type == widget.selectedCategory 
+                    : true))
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -59,6 +62,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
