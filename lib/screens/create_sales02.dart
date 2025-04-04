@@ -96,12 +96,10 @@ class _CreateSales02State extends State<CreateSales02> {
   // Pick sub-images (max 4)
   Future<void> pickSubImages() async {
     final pickedFiles = await _picker.pickMultiImage();
-    if (pickedFiles != null) {
-      setState(() {
-        _subImages = pickedFiles.take(4).map((file) => File(file.path)).toList();
-      });
+    setState(() {
+      _subImages = pickedFiles.take(4).map((file) => File(file.path)).toList();
+    });
     }
-  }
 
   // Upload image to Firebase Storage and get URL
   Future<String?> uploadImageToFirebase(File image, String imageName) async {

@@ -3,8 +3,6 @@ import 'package:bio_boost/screens/home_seller.dart';
 import 'package:bio_boost/screens/profile_company.dart';
 import 'package:bio_boost/screens/seller_profile.dart';
 import 'package:bio_boost/screens/wanted_company.dart';
-import 'package:bio_boost/screens/create_sales01.dart';
-import 'package:bio_boost/screens/create_sales02.dart';
 import 'package:bio_boost/screens/wishlist.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
@@ -94,7 +92,32 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () {},
                       ),
                     ),
-                   
+                   const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.info, color: Colors.white),
+                      label: Text(
+                        'Benefits',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BenefitsPage(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 toolbarHeight: 60,
