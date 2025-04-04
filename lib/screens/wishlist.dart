@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bio_boost/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/sales_service.dart';
+
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
 
