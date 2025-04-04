@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/service_request_service.dart';
+import '../services/user_service.dart';
 import '../services/wanted_sales_service.dart';
 
 class AddMyServicesPage extends StatefulWidget {
@@ -40,6 +41,18 @@ class _AddMyServicesPageState extends State<AddMyServicesPage> {
     weightController.dispose();
     descriptionController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    loadUserName();
+  }
+
+    void loadUserName() async {
+    String fullName = await UserService().getCurrentUserFullName();
+    setState(() {
+      nameController.text = fullName;
+    });
   }
 
   @override
