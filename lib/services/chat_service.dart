@@ -122,7 +122,7 @@ class ChatService {
   
   // Reset unread count for the current user
   await chatRoomRef.update({
-    'unreadCounts.${currentUserId}': 0,
+    'unreadCounts.$currentUserId': 0,
   });
 
   // Mark all messages from the other user as read
