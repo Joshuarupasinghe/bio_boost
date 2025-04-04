@@ -3,16 +3,15 @@ import 'package:bio_boost/models/sales_model.dart';
 import 'package:bio_boost/data/sales_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class AgriWasteDetailPage extends StatefulWidget {
-  final User currentUser; // Accept currentUser
-  final String saleId; // Accept saleId
+  final String saleId;
+  final String currentUserId;
 
   const AgriWasteDetailPage({
     super.key,
-    required this.currentUser,
     required this.saleId,
+    required this.currentUserId,
   });
 
   @override
@@ -22,7 +21,7 @@ class AgriWasteDetailPage extends StatefulWidget {
 class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
   late Future<Sales?> _agriWasteFuture;
   final SalesService _salesService = SalesService();
-  int _selectedImageIndex = -1; // -1 means main image is selected
+  int _selectedImageIndex = -1;
 
   @override
   void initState() {
@@ -30,7 +29,6 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
     _agriWasteFuture = _salesService.getSalesDetailsById(widget.saleId);
   }
 
-  //Adding Data to wishlist page using SharedPreferences
   Future<void> _addToWishlist(Sales agriWaste) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> wishlist = prefs.getStringList('wishlist') ?? [];
@@ -42,14 +40,20 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
       'weight': agriWaste.s_weight,
       'type': agriWaste.s_type,
       'image': agriWaste.s_mainImage,
+      'buyerId': widget.currentUserId,
     });
 
+    // Check if the sale is already in the wishlist
     if (!wishlist.contains(saleJson)) {
       wishlist.add(saleJson);
       await prefs.setStringList('wishlist', wishlist);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Added to Wishlist")));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Already in Wishlist")));
     }
   }
 
@@ -71,10 +75,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
+          if (snapshot.hasError || !snapshot.hasData) {
             return const Center(child: Text("No data available"));
           }
 
@@ -85,27 +86,7 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Main image container
-                Container(
-                  height: 250,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _selectedImageIndex == -1
-                          ? agriWaste.s_mainImage
-                          : agriWaste.s_otherImages[_selectedImageIndex],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Text('Image not available'));
-                      },
-                    ),
-                  ),
-                ),
+                _buildImageSection(agriWaste),
                 const SizedBox(height: 10),
 
                 // Secondary images row
@@ -198,8 +179,9 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
                 const SizedBox(height: 10),
 
                 _buildDetailFields(agriWaste),
-
                 const SizedBox(height: 16),
+
+                _buildButtons(agriWaste),
 
                 SizedBox(
                   width: double.infinity,
@@ -231,6 +213,26 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildImageSection(Sales agriWaste) {
+    return Container(
+      height: 250,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          _selectedImageIndex == -1
+              ? agriWaste.s_mainImage
+              : agriWaste.s_otherImages[_selectedImageIndex],
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
@@ -284,6 +286,46 @@ class _AgriWasteDetailPageState extends State<AgriWasteDetailPage> {
               ),
             );
           }).toList(),
+    );
+  }
+
+  Widget _buildButtons(Sales agriWaste) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/chatlist',
+                arguments: {
+                  'buyerId': widget.currentUserId,
+                  'saleId': agriWaste.documentId,
+                },
+              );
+            },
+            icon: const Icon(Icons.phone),
+            label: const Text('Contact'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.teal,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _addToWishlist(agriWaste),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add To Wish List'),
+          ),
+        ),
+      ],
     );
   }
 }
